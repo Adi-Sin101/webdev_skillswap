@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+
+
+
+@theme {
+  /* Fonts */
+  --font-primary: [Poppins, sans-serif];
+
+  /* Brand */
+  --color-primary: #1E285F;   /* warm orange, accent */
+  --color-secondary:  #E58411; /* deep navy, base */
+
+  /* Neutrals */
+  --color-background: #F8F9FC; /* very light gray */
+  --color-surface: #FFFFFF;    /* white cards */
+  --color-muted: #6B7280;      /* muted gray text */
+  --color-border: #E5E7EB;     /* light border */
+
+  /* Highlights */
+  --color-accent: #4FD1C5;     /* teal accent */
+  --color-highlight: #A78BFA;  /* soft lavender highlight */
+
+  /* Semantic */
+  --color-success: #10B981; /* green success */
+  --color-warning: #F59E0B; /* amber warning */
+  --color-error: #EF4444;   /* red error */
+  --color-info: #3B82F6;    /* blue info */
+   /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #1E285F, #E58411);
+  --gradient-accent: linear-gradient(135deg, #4FD1C5, #A78BFA);
+}
+
+
+@darkmode "class";
