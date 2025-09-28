@@ -5,8 +5,8 @@ const navItems=[
     {path:"/",label:"Find Skills"},
     {path:"/postoffer",label:"Post Offer"},
     {path:"/postrequest",label:"Post Request"},
-    {path:"/messages",label:"Message"},
     {path:"/profile",label:"Profile"},
+    {path:"/discover",label:"Discover Profiles"},
 ]
 
 const NavItems = ({ isMenuOpen, closeMenu, isScrolled }) => {

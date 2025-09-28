@@ -9,9 +9,9 @@ import {
 import FindSkills from './pages/findskills/FindSkills.jsx'
 import PostRequest from './pages/postrequest/PostRequest.jsx'
 import PostOffer from './pages/postoffers/PostOffer.jsx'
-import Messages from './pages/messages/Messages.jsx'
 import Profile from './pages/profile/Profile.jsx'
 import RouteError from './components/RouteError.jsx'
+import DiscoverProfiles from './pages/discover/DiscoverProfiles.jsx'
 
 const router = createBrowserRouter([
   {
@@ -31,13 +31,14 @@ const router = createBrowserRouter([
         path: '/postoffer',
         element: <PostOffer />,
       },
-      {
-        path: '/messages',
-        element: <Messages />,
-      },
+     
       {
         path: '/profile',
         element: <Profile />,
+      },
+      {
+        path: '/discover',
+        element: <DiscoverProfiles />,
       },
     ],
   },
