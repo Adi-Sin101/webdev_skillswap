@@ -3,8 +3,6 @@ import { FaBars, FaXmark } from "react-icons/fa6";
 import { useEffect, useState } from 'react';
 const navItems=[
     {path:"/",label:"Find Skills"},
-    {path:"/postoffer",label:"Post Offer"},
-    {path:"/postrequest",label:"Post Request"},
     {path:"/profile",label:"Profile"},
     {path:"/discover",label:"Discover Profiles"},
 ]
@@ -84,8 +82,20 @@ const Navbar = () => {
                     </div>
                 </div>
                 {/*Desktop menu*/}
-                <div className="hidden md:flex">
+                <div className="hidden md:flex items-center gap-4">
                     <NavItems closeMenu={closeMenu} isScrolled={isScrolled} />
+                    <Link 
+                        to="/login" 
+                        className="text-gray-800 font-medium px-4 py-2 rounded-xl hover:bg-white/40 hover:text-gray-900 transition-all duration-200"
+                    >
+                        Login
+                    </Link>
+                    <Link 
+                        to="/signup" 
+                        className="bg-[var(--color-accent)] text-[var(--color-surface)] font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-all duration-200 shadow"
+                    >
+                        Sign Up
+                    </Link>
                 </div>
             </nav>
             
@@ -94,6 +104,22 @@ const Navbar = () => {
                 <div className="md:hidden bg-white shadow-lg border-t relative z-50 text-black">
                     <div className="px-4 py-4">
                         <NavItems isMenuOpen={isMenuOpen} closeMenu={closeMenu} />
+                        <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-gray-200">
+                            <Link 
+                                to="/login" 
+                                onClick={closeMenu}
+                                className="text-gray-800 font-medium px-4 py-2 rounded-xl hover:bg-gray-100 transition-all duration-200"
+                            >
+                                Login
+                            </Link>
+                            <Link 
+                                to="/signup" 
+                                onClick={closeMenu}
+                                className="bg-[var(--color-accent)] text-[var(--color-surface)] font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-all duration-200 shadow text-center"
+                            >
+                                Sign Up
+                            </Link>
+                        </div>
                     </div>
                 </div>
             )}

@@ -7,11 +7,11 @@ import {
   RouterProvider,
 } from "react-router-dom";
 import FindSkills from './pages/findskills/FindSkills.jsx'
-import PostRequest from './pages/postrequest/PostRequest.jsx'
-import PostOffer from './pages/postoffers/PostOffer.jsx'
 import Profile from './pages/profile/Profile.jsx'
 import RouteError from './components/RouteError.jsx'
 import DiscoverProfiles from './pages/discover/DiscoverProfiles.jsx'
+import Login from './pages/auth/Login.jsx'
+import Signup from './pages/auth/Signup.jsx'
 
 const router = createBrowserRouter([
   {
@@ -24,15 +24,6 @@ const router = createBrowserRouter([
         element: <FindSkills />,
       },
       {
-        path: '/postrequest',
-        element: <PostRequest />,
-      },
-      {
-        path: '/postoffer',
-        element: <PostOffer />,
-      },
-     
-      {
         path: '/profile',
         element: <Profile />,
       },
@@ -41,6 +32,17 @@ const router = createBrowserRouter([
         element: <DiscoverProfiles />,
       },
     ],
+  },
+  // Auth routes (outside of main app layout)
+  {
+    path: '/login',
+    element: <Login />,
+    errorElement: <RouteError />,
+  },
+  {
+    path: '/signup',
+    element: <Signup />,
+    errorElement: <RouteError />,
   },
 ]);
 
