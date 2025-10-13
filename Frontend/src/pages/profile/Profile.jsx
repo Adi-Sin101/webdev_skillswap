@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useParams, Link } from "react-router-dom";
 import PostOfferModal from '../../components/PostOfferModal';
 import PostRequestModal from '../../components/PostRequestModal';
 
@@ -46,14 +47,21 @@ const categories = ["Coding", "Design", "Tutoring", "Speaking", "Presentation"];
 const availabilities = ["Weekends", "Weekdays", "Flexible"];
 const deadlines = ["Today", "This Week", "Flexible"];
 
-const isOwner = false; // Change to false to simulate viewing another user's profile
 const Profile = () => {
+  const { id } = useParams();
+  
+  const [user, setUser] = useState(null);
+  const [offers, setOffers] = useState([]);
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [offerModalOpen, setOfferModalOpen] = useState(false);
   const [requestModalOpen, setRequestModalOpen] = useState(false);
-  const [offers, setOffers] = useState(initialOffers);
-  const [requests, setRequests] = useState(initialRequests);
   const [connectMenuOpen, setConnectMenuOpen] = useState(false);
   const [actionMenuOpen, setActionMenuOpen] = useState(false);
+  
+  // Get logged-in user ID (will be set after fetching user data)
+  const loggedInUserId = user?._id;
+  const isOwner = !id || id === loggedInUserId;
 
   // Offer form state
   const [offerForm, setOfferForm] = useState({
@@ -85,23 +93,7 @@ const Profile = () => {
     }));
   };
 
-  const handleOfferSubmit = (e) => {
-    e.preventDefault();
-    setOffers((prev) => [
-      ...prev,
-      { ...offerForm, id: Date.now() },
-    ]);
-    setOfferModalOpen(false);
-    setOfferForm({
-      title: "",
-      category: "",
-      availability: "",
-      date: "",
-      location: "",
-      type: "Free",
-      description: "",
-    });
-  };
+
 
   const handleRequestChange = (e) => {
     const { name, value, type } = e.target;
@@ -111,36 +103,155 @@ const Profile = () => {
     }));
   };
 
-  const handleRequestSubmit = (e) => {
+  const handleRequestSubmit = async (e) => {
     e.preventDefault();
-    setRequests((prev) => [
-      ...prev,
-      { ...requestForm, id: Date.now() },
-    ]);
-    setRequestModalOpen(false);
-    setRequestForm({
-      title: "",
-      category: "",
-      deadline: "",
-      location: "",
-      type: "Free",
-      description: "",
-    });
+    try {
+      const response = await fetch("http://localhost:5000/api/requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...requestForm, userId: loggedInUserId })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setRequests(prev => [data.request, ...prev]);
+        setRequestModalOpen(false);
+        setRequestForm({
+          title: "",
+          category: "",
+          deadline: "",
+          location: "",
+          type: "Free",
+          description: "",
+        });
+      }
+    } catch (error) {
+      console.error("Error creating request:", error);
+    }
   };
+
+  // Fetch user data and their offers/requests
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const userId = id || loggedInUserId;
+        
+        // If no users exist, use dummy data
+        const usersResponse = await fetch("http://localhost:5000/api/users");
+        const usersData = await usersResponse.json();
+        
+        if (usersData.count === 0) {
+          // Create a test user if none exist
+          console.log("No users found, creating test user...");
+          const createUserResponse = await fetch("http://localhost:5000/api/users", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: "Test User",
+              email: "test@skillswap.com",
+              university: "IIT Bombay",
+              bio: "Test user for SkillSwap",
+              skills: ["JavaScript", "React", "MongoDB"]
+            })
+          });
+          const newUserData = await createUserResponse.json();
+          console.log("Created user:", newUserData);
+          setUser(newUserData.user);
+          setOffers([]);
+          setRequests([]);
+        } else {
+          // Fetch real user data (for now, use first user or create one)
+          setUser(usersData.users[0] || dummyUser);
+          
+          // Fetch offers and requests
+          const [offersRes, requestsRes] = await Promise.all([
+            fetch("http://localhost:5000/api/offers"),
+            fetch("http://localhost:5000/api/requests")
+          ]);
+          
+          const offersData = await offersRes.json();
+          const requestsData = await requestsRes.json();
+          
+          setOffers(offersData.offers || []);
+          setRequests(requestsData.requests || []);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        // Fallback to dummy data
+        setUser(dummyUser);
+        setOffers(initialOffers);
+        setRequests(initialRequests);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id, loggedInUserId]);
+
+  const handleOfferSubmit = async (e) => {
+    e.preventDefault();
+    console.log("Submitting offer with form data:", offerForm);
+    console.log("Using userId:", loggedInUserId);
+    
+    try {
+      const response = await fetch("http://localhost:5000/api/offers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...offerForm, userId: loggedInUserId })
+      });
+      const data = await response.json();
+      console.log("API response:", data);
+      
+      if (response.ok) {
+        console.log("Offer created successfully!");
+        setOffers(prev => [data.offer, ...prev]);
+        setOfferModalOpen(false);
+        setOfferForm({
+          title: "",
+          category: "",
+          availability: "",
+          date: "",
+          location: "",
+          type: "Free",
+          description: "",
+        });
+        alert("Offer created successfully!");
+      } else {
+        console.error("API error:", data);
+        alert(`Error: ${data.error || "Failed to create offer"}`);
+      }
+    } catch (error) {
+      console.error("Error creating offer:", error);
+      alert("Network error. Check if backend is running on localhost:5000");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[var(--color-primary)] flex items-center justify-center">
+        <div className="text-xl font-bold text-[var(--color-primary)]">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[var(--color-primary)] flex flex-col py-0">
       {/* Top Info Bar */}
+      {/* If viewing another user's profile, show a banner */}
+      {!isOwner && (
+        <div className="w-full bg-yellow-100 text-yellow-800 text-center py-2 font-semibold">You are viewing another user's profile</div>
+      )}
       <div className="w-full bg-white shadow-lg px-6 md:px-12 py-8 flex flex-col md:flex-row gap-8 items-center mt-8 relative">
         <div className="w-28 h-28 rounded-full border-4 border-[var(--color-accent)] overflow-hidden">
-          <img src={dummyUser.avatar} alt="Profile" className="w-full h-full object-cover" />
+          <img src={user?.avatar || "https://randomuser.me/api/portraits/men/1.jpg"} alt="Profile" className="w-full h-full object-cover" />
         </div>
         <div className="flex-1 text-center md:text-left">
-          <h2 className="text-3xl font-bold text-[var(--color-primary)] mb-1">{dummyUser.name}</h2>
-          <p className="text-gray-600 font-semibold mb-2">{dummyUser.university}</p>
-          <p className="text-gray-700 mb-2">{dummyUser.bio}</p>
+          <h2 className="text-3xl font-bold text-[var(--color-primary)] mb-1">{user?.name || "Loading..."}</h2>
+          <p className="text-gray-600 font-semibold mb-2">{user?.university || ""}</p>
+          <p className="text-gray-700 mb-2">{user?.bio || ""}</p>
           <div className="flex gap-2 flex-wrap mb-2 justify-center md:justify-start">
-            {dummyUser.skills.map(skill => (
+            {(user?.skills || []).map(skill => (
               <span key={skill} className="bg-green-100 text-green-800 px-3 py-1 rounded-lg text-xs font-semibold shadow">{skill}</span>
             ))}
           </div>
@@ -203,18 +314,18 @@ const Profile = () => {
       <div className="w-full bg-gray-50 shadow px-6 md:px-12 py-6 flex gap-8 md:gap-12 items-center flex-wrap">
         <div className="flex flex-col items-center">
           <span className="text-yellow-400 text-2xl">★</span>
-          <span className="font-bold text-lg">{dummyUser.rating}</span>
+          <span className="font-bold text-lg">{user?.rating || 4.5}</span>
           <span className="text-xs text-gray-500">Rating</span>
         </div>
         <div className="flex flex-col items-center">
           <span className="text-teal-500 text-2xl">✅</span>
-          <span className="font-bold text-lg">{dummyUser.completed}</span>
-          <span className="text-xs text-gray-500">Completed</span>
+          <span className="font-bold text-lg">{offers.length}</span>
+          <span className="text-xs text-gray-500">Offers</span>
         </div>
         <div className="flex flex-col items-center">
           <span className="text-indigo-500 text-2xl">🏅</span>
           <div className="flex gap-1 flex-wrap">
-            {dummyUser.badges.map(badge => (
+            {(user?.badges || ["New User"]).map(badge => (
               <span key={badge} className="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded text-xs font-semibold shadow">{badge}</span>
             ))}
           </div>
@@ -230,57 +341,211 @@ const Profile = () => {
 
       {/* Main Feed Section */}
       <div className="flex flex-col md:flex-row gap-8 px-6 md:px-12 py-8 w-full">
-        {/* Completed Offers from other students */}
+        {/* Completed Activities */}
         <div className="flex-1">
-          <h3 className="text-xl font-bold text-[var(--color-primary)] mb-4">Completed Offers (Other Students)</h3>
-          <div className="flex flex-col gap-3 mb-8">
-            {/* Replace with real completed offers from other students */}
-            {[{id: 101, title: "Python Tutoring", student: "Amit Singh", status: "Completed"}].map(offer => (
-              <div key={offer.id} className="bg-green-50 rounded-lg px-6 py-4 flex justify-between items-center shadow">
-                <span className="text-gray-700 text-base">{offer.title} <span className="text-xs text-gray-500">by {offer.student}</span></span>
-                <span className="text-green-600 text-sm font-bold">{offer.status}</span>
+          <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-3 rounded-t-lg">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="text-xl font-bold">
+                  Completed Activities
+                </h3>
+                <p className="text-green-100 text-sm">Your successful skill exchanges</p>
+              </div>
+              <Link 
+                to="/completed-activities" 
+                className="text-green-100 text-sm font-medium hover:text-white flex items-center gap-1 bg-green-600 px-3 py-1 rounded-lg hover:bg-green-700 transition-colors"
+              >
+                View All 
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+          </div>
+          <div className="bg-white rounded-b-lg shadow-lg p-4 mb-4">
+            <div className="flex flex-col gap-3">
+            {/* Sample completed activities */}
+            {[
+              {id: 101, title: "Python Tutoring", student: "Amit Singh", status: "Completed", type: "helped", date: "2 days ago"},
+              {id: 102, title: "React Help", student: "Priya Sharma", status: "Completed", type: "received", date: "1 week ago"}
+            ].map(activity => (
+              <div key={activity.id} className="rounded-lg px-6 py-4 shadow border-l-4 bg-green-50 border-green-400">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <span className="font-medium text-gray-800">{activity.title}</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        activity.type === 'helped' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {activity.type === 'helped' ? 'You helped' : 'You learned'}
+                      </span>
+                      <span className="text-xs text-gray-500">with {activity.student}</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs font-semibold px-2 py-1 rounded bg-green-100 text-green-800">
+                      Completed
+                    </span>
+                    <div className="text-xs text-gray-400 mt-1">{activity.date}</div>
+                  </div>
+                </div>
               </div>
             ))}
+            </div>
           </div>
         </div>
         {/* User's Own Post Offers */}
         <div className="flex-1">
-          <h3 className="text-xl font-bold text-[var(--color-primary)] mb-4">Your Offers</h3>
-          <div className="flex flex-col gap-3 mb-8">
-            {offers.map(offer => (
-              <div key={offer.id} className="bg-white rounded-lg px-6 py-4 shadow border border-gray-200">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-bold text-lg text-[var(--color-primary)]">{offer.title}</span>
-                  <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">{offer.category}</span>
-                </div>
-                <div className="flex gap-4 text-sm text-gray-500 mb-2">
-                  <span>{offer.availability}</span>
-                  <span>{offer.location}</span>
-                  <span>{offer.type}</span>
-                </div>
-                <div className="text-gray-700 text-sm mb-2">{offer.description}</div>
+          <div className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white px-4 py-3 rounded-t-lg">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="text-xl font-bold">
+                  Your Skill Offers
+                </h3>
+                <p className="text-blue-100 text-sm">Skills you're offering to share</p>
               </div>
-            ))}
+              <Link 
+                to="/my-offers" 
+                className="text-blue-100 text-sm font-medium hover:text-white flex items-center gap-1 bg-blue-600 px-3 py-1 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                View All 
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+          </div>
+          <div className="bg-white rounded-b-lg shadow-lg p-4 mb-4">
+            <div className="flex flex-col gap-3">
+            {offers.slice(0, 3).map(offer => {
+              // Add random status for demo
+              const status = Math.random() > 0.5 ? 'completed' : 'pending';
+              const responses = Math.floor(Math.random() * 5);
+              
+              return (
+                <div key={offer.id} className="bg-white rounded-lg px-6 py-4 shadow border border-gray-200 hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="font-bold text-lg text-[var(--color-primary)]">{offer.title}</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                          status === 'completed' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {status === 'completed' ? '✅ Completed' : '⏳ Pending'}
+                        </span>
+                      </div>
+                      <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">{offer.category}</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-4 text-sm text-gray-500 mb-2">
+                    <span>{offer.availability}</span>
+                    <span>{offer.location}</span>
+                    <span className={`px-2 py-1 rounded text-xs ${
+                      offer.type === 'Free' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {offer.type}
+                    </span>
+                  </div>
+                  <div className="text-gray-700 text-sm mb-3 line-clamp-2">{offer.description}</div>
+                  <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                    <span className="text-xs text-gray-500">{responses} responses</span>
+                    <span className="text-xs text-gray-400">
+                      {new Date(offer.createdAt || Date.now()).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+            {offers.length === 0 && (
+              <div className="bg-gray-50 rounded-lg px-6 py-8 text-center">
+                <p className="text-gray-500">No offers posted yet</p>
+              </div>
+            )}
+            </div>
           </div>
         </div>
         {/* User's Post Requests */}
         <div className="flex-1">
-          <h3 className="text-xl font-bold text-[var(--color-primary)] mb-4">Your Requests</h3>
-          <div className="flex flex-col gap-3 mb-8">
-            {requests.map(request => (
-              <div key={request.id} className="bg-white rounded-lg px-6 py-4 shadow border border-gray-200">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-bold text-lg text-[var(--color-primary)]">{request.title}</span>
-                  <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">{request.category}</span>
-                </div>
-                <div className="flex gap-4 text-sm text-gray-500 mb-2">
-                  <span>{request.deadline}</span>
-                  <span>{request.location}</span>
-                  <span>{request.type}</span>
-                </div>
-                <div className="text-gray-700 text-sm mb-2">{request.description}</div>
+          <div className="bg-gradient-to-r from-indigo-500 to-blue-600 text-white px-4 py-3 rounded-t-lg">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="text-xl font-bold">
+                  Your Skill Requests
+                </h3>
+                <p className="text-indigo-100 text-sm">Skills you're looking to learn</p>
               </div>
-            ))}
+              <Link 
+                to="/my-requests" 
+                className="text-indigo-100 text-sm font-medium hover:text-white flex items-center gap-1 bg-indigo-600 px-3 py-1 rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                View All 
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+          </div>
+          <div className="bg-white rounded-b-lg shadow-lg p-4 mb-4">
+            <div className="flex flex-col gap-3">
+            {requests.slice(0, 3).map(request => {
+              // Add random status for demo
+              const status = Math.random() > 0.5 ? 'completed' : 'pending';
+              const offers = Math.floor(Math.random() * 3);
+              
+              return (
+                <div key={request.id} className="bg-white rounded-lg px-6 py-4 shadow border border-gray-200 hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="font-bold text-lg text-[var(--color-primary)]">{request.title}</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                          status === 'completed' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-orange-100 text-orange-800'
+                        }`}>
+                          {status === 'completed' ? 'Completed' : 'Seeking Help'}
+                        </span>
+                      </div>
+                      <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">{request.category}</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-4 text-sm text-gray-500 mb-2">
+                    <span className={`px-2 py-1 rounded text-xs ${
+                      request.deadline === 'Today' 
+                        ? 'bg-red-100 text-red-800' 
+                        : request.deadline === 'This Week' 
+                          ? 'bg-yellow-100 text-yellow-800' 
+                          : 'bg-green-100 text-green-800'
+                    }`}>
+                      {request.deadline}
+                    </span>
+                    <span>{request.location}</span>
+                    <span className={`px-2 py-1 rounded text-xs ${
+                      request.type === 'Free' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {request.type}
+                    </span>
+                  </div>
+                  <div className="text-gray-700 text-sm mb-3 line-clamp-2">{request.description}</div>
+                  <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                    <span className="text-xs text-gray-500">{offers} offers received</span>
+                    <span className="text-xs text-gray-400">
+                      {new Date(request.createdAt || Date.now()).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+            {requests.length === 0 && (
+              <div className="bg-gray-50 rounded-lg px-6 py-8 text-center">
+                <p className="text-gray-500">No requests posted yet</p>
+              </div>
+            )}
+            </div>
           </div>
         </div>
       </div>

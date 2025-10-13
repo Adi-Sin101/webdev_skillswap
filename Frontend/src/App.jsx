@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { FaBars } from 'react-icons/fa6';
 import { Outlet } from 'react-router-dom'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
@@ -7,21 +8,31 @@ import Navbar from './components/Navbar.jsx'
 import Sidebar from './components/Sidebar.jsx'
 
 function App() {
- 
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   return (
     <>
       <Navbar />
-      {/* Flex container for main content + sidebar */}
-      <div className="flex gap-6 p-6 bg-gray-50 min-h-[calc(100vh-64px)]">
-        {/* Main content */}
-        <main className="flex-1">
+      <div className={`flex bg-gray-50 min-h-[calc(100vh-64px)] transition-all duration-300 ${sidebarOpen ? 'gap-6 p-6' : 'p-6'}`}>
+        <main className={`transition-all duration-300 ${sidebarOpen ? 'flex-1' : 'w-full'}`}>
           <Outlet />
         </main>
-
-        {/* Right Sidebar (sticky) */}
-        <aside className="w-72 sticky top-20 self-start">
-          <Sidebar />
-        </aside>
+        {/* Sidebar and toggle button */}
+        <div className="relative">
+          {/* Hamburger button - square, sticky below navbar, always near sidebar */}
+          <button
+            className="absolute -left-12 z-50 bg-white border border-gray-300 p-3 rounded-lg shadow-lg hover:bg-gray-100 transition flex items-center justify-center"
+            onClick={() => setSidebarOpen((open) => !open)}
+            aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+            style={{ top: '104px' }} // 104px below top for spacing from navbar (navbar is 64px + 40px margin)
+          >
+            <FaBars size={24} className="text-gray-700" />
+          </button>
+          {sidebarOpen && (
+            <aside className="w-72 sticky top-[104px] self-start animate-slide-in-right">
+              <Sidebar />
+            </aside>
+          )}
+        </div>
       </div>
     </>
   );

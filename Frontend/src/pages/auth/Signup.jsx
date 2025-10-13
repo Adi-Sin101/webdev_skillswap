@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -9,22 +10,53 @@ const Signup = () => {
     password: '',
     confirmPassword: ''
   });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  
+  const { register } = useAuth();
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+    // Clear error when user starts typing
+    if (error) setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle signup logic here
+    setLoading(true);
+    setError('');
+
+    // Client-side validation
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!');
+      setError('Passwords do not match!');
+      setLoading(false);
       return;
     }
-    console.log('Signup data:', formData);
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long!');
+      setLoading(false);
+      return;
+    }
+
+    const result = await register({
+      name: formData.name,
+      email: formData.email,
+      university: formData.university,
+      password: formData.password
+    });
+    
+    if (result.success) {
+      navigate('/'); // Redirect to home page
+    } else {
+      setError(result.error);
+    }
+    
+    setLoading(false);
   };
 
   return (
@@ -36,6 +68,13 @@ const Signup = () => {
           <h2 className="text-2xl font-semibold text-[var(--color-primary)] mb-2">Join Our Community</h2>
           <p className="text-[var(--color-muted)]">Create your account to start exchanging skills</p>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded relative mb-4">
+            {error}
+          </div>
+        )}
 
         {/* Signup Form */}
         <div className="bg-[var(--color-surface)] rounded-2xl shadow-xl p-8 border border-[var(--color-border)]">
@@ -145,9 +184,10 @@ const Signup = () => {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full bg-[var(--color-accent)] text-[var(--color-surface)] font-semibold py-3 px-4 rounded-lg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2 transition-all duration-200 shadow-lg"
+              disabled={loading}
+              className="w-full bg-[var(--color-accent)] text-[var(--color-surface)] font-semibold py-3 px-4 rounded-lg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Create Account
+              {loading ? 'Creating Account...' : 'Create Account'}
             </button>
           </form>
 

@@ -1,12 +1,17 @@
-const express = require('express');
-const cors = require('cors');
-const morgan = require('morgan');
+import express from 'express';
+import cors from 'cors';
+import morgan from 'morgan';
+import dotenv from 'dotenv';
+import connectDB from './config/connectDB.js';
 
 // Import routes
-const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/users');
-const offerRoutes = require('./routes/offers');
-const requestRoutes = require('./routes/requests');
+import authRoutes from './routes/auth.js';
+import userRoutes from './routes/users.js';
+import offerRoutes from './routes/offers.js';
+import requestRoutes from './routes/requests.js';
+
+dotenv.config();
+connectDB();
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -43,7 +48,7 @@ app.get('/health', (req, res) => {
 });
 
 // 404 handler
-app.use('*', (req, res) => {
+app.use((req, res) => {
   res.status(404).json({ 
     error: 'Route not found',
     path: req.originalUrl

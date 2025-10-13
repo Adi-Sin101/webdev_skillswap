@@ -1,83 +1,72 @@
-const express = require('express');
+import express from "express";
+import User from "../models/User.js";
+
 const router = express.Router();
 
-// Sample users data
-let users = [
-  {
-    id: 1,
-    name: 'John Doe',
-    email: 'john@example.com',
-    university: 'IIT Bombay',
-    bio: 'Computer Science student passionate about web development',
-    skills: ['JavaScript', 'React', 'Node.js'],
-    avatar: 'https://randomuser.me/api/portraits/men/1.jpg'
-  },
-  {
-    id: 2,
-    name: 'Jane Smith',
-    email: 'jane@example.com',
-    university: 'IIT Delhi', 
-    bio: 'Data Science enthusiast and Python developer',
-    skills: ['Python', 'Data Science', 'Machine Learning'],
-    avatar: 'https://randomuser.me/api/portraits/women/1.jpg'
+// GET /api/users - list all users
+router.get("/", async (req, res) => {
+  try {
+    const users = await User.find().select("-__v");
+    res.json({ message: "Users retrieved successfully", users, count: users.length });
+  } catch (err) {
+    console.error("GET /api/users error:", err);
+    res.status(500).json({ error: "Server error", message: err.message });
   }
-];
-
-// GET /api/users - Get all users
-router.get('/', (req, res) => {
-  res.json({
-    message: 'Users retrieved successfully',
-    users: users
-  });
 });
 
-// GET /api/users/:id - Get user by ID
-router.get('/:id', (req, res) => {
-  const userId = parseInt(req.params.id);
-  const user = users.find(u => u.id === userId);
-  
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
+// GET /api/users/:id - get user by ID
+router.get("/:id", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json({ message: "User retrieved successfully", user });
+  } catch (err) {
+    console.error("GET /api/users/:id error:", err);
+    res.status(500).json({ error: "Server error", message: err.message });
   }
-  
-  res.json({
-    message: 'User retrieved successfully',
-    user: user
-  });
 });
 
-// PUT /api/users/:id - Update user
-router.put('/:id', (req, res) => {
-  const userId = parseInt(req.params.id);
-  const userIndex = users.findIndex(u => u.id === userId);
-  
-  if (userIndex === -1) {
-    return res.status(404).json({ error: 'User not found' });
+// POST /api/users - create user
+router.post("/", async (req, res) => {
+  try {
+    const { name, email, university, bio, skills, avatar } = req.body;
+    if (!name || !email) return res.status(400).json({ error: "Name and email are required" });
+
+    const newUser = new User({ name, email, university, bio, skills, avatar });
+    await newUser.save();
+    res.status(201).json({ message: "User created successfully", user: newUser });
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({ error: "Email already exists" });
+    }
+    console.error("POST /api/users error:", err);
+    res.status(400).json({ error: "Failed to create user", message: err.message });
   }
-  
-  // Update user data
-  users[userIndex] = { ...users[userIndex], ...req.body };
-  
-  res.json({
-    message: 'User updated successfully',
-    user: users[userIndex]
-  });
 });
 
-// DELETE /api/users/:id - Delete user
-router.delete('/:id', (req, res) => {
-  const userId = parseInt(req.params.id);
-  const userIndex = users.findIndex(u => u.id === userId);
-  
-  if (userIndex === -1) {
-    return res.status(404).json({ error: 'User not found' });
+// PUT /api/users/:id - update user
+router.put("/:id", async (req, res) => {
+  try {
+    const updates = req.body;
+    const user = await User.findByIdAndUpdate(req.params.id, updates, { new: true });
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json({ message: "User updated successfully", user });
+  } catch (err) {
+    console.error("PUT /api/users/:id error:", err);
+    res.status(400).json({ error: "Failed to update user", message: err.message });
   }
-  
-  users.splice(userIndex, 1);
-  
-  res.json({
-    message: 'User deleted successfully'
-  });
 });
 
-module.exports = router;
+// DELETE /api/users/:id - delete user
+router.delete("/:id", async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json({ message: "User deleted successfully" });
+  } catch (err) {
+    console.error("DELETE /api/users/:id error:", err);
+    res.status(500).json({ error: "Server error", message: err.message });
+  }
+});
+
+export default router;

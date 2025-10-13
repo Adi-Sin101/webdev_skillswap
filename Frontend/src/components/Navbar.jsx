@@ -1,6 +1,7 @@
 import { Link, NavLink } from 'react-router-dom';
 import { FaBars, FaXmark } from "react-icons/fa6";
 import { useEffect, useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 const navItems=[
     {path:"/",label:"Find Skills"},
     {path:"/profile",label:"Profile"},
@@ -32,6 +33,7 @@ const NavItems = ({ isMenuOpen, closeMenu, isScrolled }) => {
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
+    const { user, logout } = useAuth();
     
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
@@ -39,6 +41,11 @@ const Navbar = () => {
     
     const closeMenu = () => {
         setIsMenuOpen(false);
+    };
+
+    const handleLogout = () => {
+        logout();
+        closeMenu();
     };
     
     //when scroll, give background color to navbar
@@ -84,18 +91,31 @@ const Navbar = () => {
                 {/*Desktop menu*/}
                 <div className="hidden md:flex items-center gap-4">
                     <NavItems closeMenu={closeMenu} isScrolled={isScrolled} />
-                    <Link 
-                        to="/login" 
-                        className="text-gray-800 font-medium px-4 py-2 rounded-xl hover:bg-white/40 hover:text-gray-900 transition-all duration-200"
-                    >
-                        Login
-                    </Link>
-                    <Link 
-                        to="/signup" 
-                        className="bg-[var(--color-accent)] text-[var(--color-surface)] font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-all duration-200 shadow"
-                    >
-                        Sign Up
-                    </Link>
+                    {user ? (
+                        <div className="flex items-center gap-4">
+                            <button 
+                                onClick={handleLogout}
+                                className="text-gray-800 font-medium px-4 py-2 rounded-xl hover:bg-white/40 hover:text-gray-900 transition-all duration-200"
+                            >
+                                Logout
+                            </button>
+                        </div>
+                    ) : (
+                        <>
+                            <Link 
+                                to="/login" 
+                                className="text-gray-800 font-medium px-4 py-2 rounded-xl hover:bg-white/40 hover:text-gray-900 transition-all duration-200"
+                            >
+                                Login
+                            </Link>
+                            <Link 
+                                to="/signup" 
+                                className="bg-[var(--color-accent)] text-[var(--color-surface)] font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-all duration-200 shadow"
+                            >
+                                Sign Up
+                            </Link>
+                        </>
+                    )}
                 </div>
             </nav>
             
@@ -105,20 +125,33 @@ const Navbar = () => {
                     <div className="px-4 py-4">
                         <NavItems isMenuOpen={isMenuOpen} closeMenu={closeMenu} />
                         <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-gray-200">
-                            <Link 
-                                to="/login" 
-                                onClick={closeMenu}
-                                className="text-gray-800 font-medium px-4 py-2 rounded-xl hover:bg-gray-100 transition-all duration-200"
-                            >
-                                Login
-                            </Link>
-                            <Link 
-                                to="/signup" 
-                                onClick={closeMenu}
-                                className="bg-[var(--color-accent)] text-[var(--color-surface)] font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-all duration-200 shadow text-center"
-                            >
-                                Sign Up
-                            </Link>
+                            {user ? (
+                                <>
+                                    <button 
+                                        onClick={handleLogout}
+                                        className="text-gray-800 font-medium px-4 py-2 rounded-xl hover:bg-gray-100 transition-all duration-200 text-left"
+                                    >
+                                        Logout
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <Link 
+                                        to="/login" 
+                                        onClick={closeMenu}
+                                        className="text-gray-800 font-medium px-4 py-2 rounded-xl hover:bg-gray-100 transition-all duration-200"
+                                    >
+                                        Login
+                                    </Link>
+                                    <Link 
+                                        to="/signup" 
+                                        onClick={closeMenu}
+                                        className="bg-[var(--color-accent)] text-[var(--color-surface)] font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-all duration-200 shadow text-center"
+                                    >
+                                        Sign Up
+                                    </Link>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>

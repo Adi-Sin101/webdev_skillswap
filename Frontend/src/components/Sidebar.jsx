@@ -4,7 +4,8 @@ const Sidebar = () => {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
 
-  const popularSkills = ["Python", "PPT", "ML"];
+  const [selectedSkill, setSelectedSkill] = useState(null);
+  const popularSkills = ["Python", "PPT", "ML", "React", "Design", "Speaking"];
   const activeUniversities = ["MIT", "Stanford", "KUET"];
 
   const handleSubscribe = () => {
@@ -25,12 +26,19 @@ const Sidebar = () => {
           {popularSkills.map((skill, idx) => (
             <li
               key={idx}
-              className="px-3 py-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 cursor-pointer transition"
+              className={`px-3 py-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 cursor-pointer transition font-semibold ${selectedSkill === skill ? 'ring-2 ring-blue-500' : ''}`}
+              onClick={() => setSelectedSkill(skill)}
             >
               {skill}
             </li>
           ))}
         </ul>
+        {selectedSkill && (
+          <div className="mt-3 p-3 bg-blue-50 rounded-lg text-blue-900 font-medium shadow">
+            Showing posts for <span className="font-bold">{selectedSkill}</span>
+            <button className="ml-4 text-xs text-blue-600 underline" onClick={() => setSelectedSkill(null)}>Clear</button>
+          </div>
+        )}
       </div>
 
       {/* Active Universities */}

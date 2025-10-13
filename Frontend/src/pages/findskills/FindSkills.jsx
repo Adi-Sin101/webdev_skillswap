@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import SearchBar from "../../components/SearchBar";
 import FiltersPanel from "../../components/FiltersPanel";
 import ListingsFeed from "../../components/ListingsFeed";
@@ -39,6 +39,8 @@ const skillsData = [
 ];
 
 const FindSkills = () => {
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     type: "",
     category: "",
@@ -47,7 +49,58 @@ const FindSkills = () => {
     free: "",
   });
 
-  const filteredPosts = skillsData.filter((post) => {
+  // Fetch offers and requests from API
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+        const [offersRes, requestsRes] = await Promise.all([
+          fetch("http://localhost:5000/api/offers"),
+          fetch("http://localhost:5000/api/requests")
+        ]);
+        
+        const offersData = await offersRes.json();
+        const requestsData = await requestsRes.json();
+        
+        // Transform API data to match expected format
+        const transformedOffers = (offersData.offers || []).map(offer => ({
+          id: offer._id,
+          type: "Offer",
+          title: offer.title,
+          poster: offer.user?.name || "Anonymous",
+          university: offer.user?.university || offer.location,
+          availability: offer.availability,
+          category: offer.category,
+          free: offer.type === "Free",
+          details: offer.description,
+        }));
+
+        const transformedRequests = (requestsData.requests || []).map(request => ({
+          id: request._id,
+          type: "Request", 
+          title: request.title,
+          poster: request.user?.name || "Anonymous",
+          university: request.user?.university || request.location,
+          deadline: request.deadline,
+          category: request.category,
+          free: request.type === "Free",
+          details: request.description,
+        }));
+
+        setPosts([...transformedOffers, ...transformedRequests]);
+      } catch (error) {
+        console.error("Error fetching posts:", error);
+        // Fallback to dummy data
+        setPosts(skillsData);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, []);
+
+  const filteredPosts = posts.filter((post) => {
     return (
       (!filters.type || post.type === filters.type) &&
       (!filters.category || post.category === filters.category) &&
@@ -56,6 +109,14 @@ const FindSkills = () => {
       (!filters.free || (filters.free === "Free" ? post.free : !post.free))
     );
   });
+
+  if (loading) {
+    return (
+      <div className="p-6 pl-4 flex items-center justify-center min-h-[400px]">
+        <div className="text-xl font-bold text-[var(--color-primary)]">Loading posts...</div>
+      </div>
+    );
+  }
 
   return (
   <div className="p-6 pl-4">

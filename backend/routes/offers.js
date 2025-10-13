@@ -1,114 +1,88 @@
-const express = require('express');
+import express from "express";
+import Offer from "../models/offer.js";
+import User from "../models/User.js";
+
 const router = express.Router();
 
-// Sample offers data
-let offers = [
-  {
-    id: 1,
-    title: 'React Tutoring',
-    description: 'I can help you learn React from basics to advanced concepts',
-    category: 'Coding',
-    availability: 'Weekends',
-    location: 'IIT Bombay',
-    type: 'Free',
-    userId: 1,
-    userName: 'John Doe',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: 2,
-    title: 'Python Data Science Help',
-    description: 'Assistance with Python, pandas, numpy, and data visualization',
-    category: 'Tutoring',
-    availability: 'Flexible', 
-    location: 'IIT Delhi',
-    type: 'Free',
-    userId: 2,
-    userName: 'Jane Smith',
-    createdAt: new Date().toISOString()
+// GET /api/offers - list all offers
+router.get("/", async (req, res) => {
+  try {
+    const offers = await Offer.find().populate("user", "name university avatar").sort({ createdAt: -1 });
+    res.json({ message: "Offers retrieved successfully", offers, count: offers.length });
+  } catch (err) {
+    console.error("GET /api/offers error:", err);
+    res.status(500).json({ error: "Server error", message: err.message });
   }
-];
-
-// GET /api/offers - Get all offers
-router.get('/', (req, res) => {
-  res.json({
-    message: 'Offers retrieved successfully',
-    offers: offers,
-    count: offers.length
-  });
 });
 
-// GET /api/offers/:id - Get offer by ID
-router.get('/:id', (req, res) => {
-  const offerId = parseInt(req.params.id);
-  const offer = offers.find(o => o.id === offerId);
-  
-  if (!offer) {
-    return res.status(404).json({ error: 'Offer not found' });
+// GET /api/offers/:id - get single offer
+router.get("/:id", async (req, res) => {
+  try {
+    const offer = await Offer.findById(req.params.id).populate("user", "name university avatar");
+    if (!offer) return res.status(404).json({ error: "Offer not found" });
+    res.json({ message: "Offer retrieved successfully", offer });
+  } catch (err) {
+    console.error("GET /api/offers/:id error:", err);
+    res.status(500).json({ error: "Server error", message: err.message });
   }
-  
-  res.json({
-    message: 'Offer retrieved successfully',
-    offer: offer
-  });
 });
 
-// POST /api/offers - Create new offer
-router.post('/', (req, res) => {
-  const { title, description, category, availability, location, type, userId, userName } = req.body;
-  
-  const newOffer = {
-    id: offers.length + 1,
-    title,
-    description,
-    category,
-    availability,
-    location,
-    type,
-    userId,
-    userName,
-    createdAt: new Date().toISOString()
-  };
-  
-  offers.push(newOffer);
-  
-  res.status(201).json({
-    message: 'Offer created successfully',
-    offer: newOffer
-  });
-});
+// POST /api/offers - create
+router.post("/", async (req, res) => {
+  try {
+    const { title, description, category, availability, date, location, type = "Free", userId } = req.body;
+    if (!title) return res.status(400).json({ error: "Title is required" });
+    if (!userId) return res.status(400).json({ error: "userId is required" });
 
-// PUT /api/offers/:id - Update offer
-router.put('/:id', (req, res) => {
-  const offerId = parseInt(req.params.id);
-  const offerIndex = offers.findIndex(o => o.id === offerId);
-  
-  if (offerIndex === -1) {
-    return res.status(404).json({ error: 'Offer not found' });
+    const user = await User.findById(userId);
+    if (!user) return res.status(400).json({ error: "User not found" });
+
+    const newOffer = new Offer({
+      title,
+      description,
+      category,
+      availability,
+      date,
+      location,
+      type,
+      user: user._id
+    });
+
+    await newOffer.save();
+    const populated = await Offer.findById(newOffer._id).populate("user", "name university avatar");
+    res.status(201).json({ message: "Offer created successfully", offer: populated });
+  } catch (err) {
+    console.error("POST /api/offers error:", err);
+    res.status(400).json({ error: "Failed to create offer", message: err.message });
   }
-  
-  offers[offerIndex] = { ...offers[offerIndex], ...req.body };
-  
-  res.json({
-    message: 'Offer updated successfully',
-    offer: offers[offerIndex]
-  });
 });
 
-// DELETE /api/offers/:id - Delete offer
-router.delete('/:id', (req, res) => {
-  const offerId = parseInt(req.params.id);
-  const offerIndex = offers.findIndex(o => o.id === offerId);
-  
-  if (offerIndex === -1) {
-    return res.status(404).json({ error: 'Offer not found' });
+// PUT /api/offers/:id - update
+router.put("/:id", async (req, res) => {
+  try {
+    const updates = req.body;
+    const offer = await Offer.findByIdAndUpdate(req.params.id, updates, { new: true }).populate(
+      "user",
+      "name university avatar"
+    );
+    if (!offer) return res.status(404).json({ error: "Offer not found" });
+    res.json({ message: "Offer updated successfully", offer });
+  } catch (err) {
+    console.error("PUT /api/offers/:id error:", err);
+    res.status(400).json({ error: "Failed to update offer", message: err.message });
   }
-  
-  offers.splice(offerIndex, 1);
-  
-  res.json({
-    message: 'Offer deleted successfully'
-  });
 });
 
-module.exports = router;
+// DELETE /api/offers/:id - delete
+router.delete("/:id", async (req, res) => {
+  try {
+    const offer = await Offer.findByIdAndDelete(req.params.id);
+    if (!offer) return res.status(404).json({ error: "Offer not found" });
+    res.json({ message: "Offer deleted successfully" });
+  } catch (err) {
+    console.error("DELETE /api/offers/:id error:", err);
+    res.status(500).json({ error: "Server error", message: err.message });
+  }
+});
+
+export default router;

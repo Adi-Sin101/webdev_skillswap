@@ -1,114 +1,87 @@
-const express = require('express');
+import express from "express";
+import Request from "../models/Request.js";
+import User from "../models/User.js";
+
 const router = express.Router();
 
-// Sample requests data
-let requests = [
-  {
-    id: 1,
-    title: 'Need help with CSS Grid',
-    description: 'Looking for someone to explain CSS Grid layout concepts',
-    category: 'Design',
-    deadline: 'This Week',
-    location: 'IIT Bombay',
-    type: 'Free',
-    userId: 1,
-    userName: 'John Doe',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: 2,
-    title: 'Machine Learning Project Guidance',
-    description: 'Need guidance on a ML project using scikit-learn',
-    category: 'Tutoring',
-    deadline: 'Flexible',
-    location: 'IIT Delhi',
-    type: 'Free',
-    userId: 2,
-    userName: 'Jane Smith',
-    createdAt: new Date().toISOString()
+// GET /api/requests - list all requests
+router.get("/", async (req, res) => {
+  try {
+    const requests = await Request.find().populate("user", "name university avatar").sort({ createdAt: -1 });
+    res.json({ message: "Requests retrieved successfully", requests, count: requests.length });
+  } catch (err) {
+    console.error("GET /api/requests error:", err);
+    res.status(500).json({ error: "Server error", message: err.message });
   }
-];
-
-// GET /api/requests - Get all requests
-router.get('/', (req, res) => {
-  res.json({
-    message: 'Requests retrieved successfully',
-    requests: requests,
-    count: requests.length
-  });
 });
 
-// GET /api/requests/:id - Get request by ID
-router.get('/:id', (req, res) => {
-  const requestId = parseInt(req.params.id);
-  const request = requests.find(r => r.id === requestId);
-  
-  if (!request) {
-    return res.status(404).json({ error: 'Request not found' });
+// GET /api/requests/:id - get single request
+router.get("/:id", async (req, res) => {
+  try {
+    const request = await Request.findById(req.params.id).populate("user", "name university avatar");
+    if (!request) return res.status(404).json({ error: "Request not found" });
+    res.json({ message: "Request retrieved successfully", request });
+  } catch (err) {
+    console.error("GET /api/requests/:id error:", err);
+    res.status(500).json({ error: "Server error", message: err.message });
   }
-  
-  res.json({
-    message: 'Request retrieved successfully',
-    request: request
-  });
 });
 
-// POST /api/requests - Create new request
-router.post('/', (req, res) => {
-  const { title, description, category, deadline, location, type, userId, userName } = req.body;
-  
-  const newRequest = {
-    id: requests.length + 1,
-    title,
-    description,
-    category,
-    deadline,
-    location,
-    type,
-    userId,
-    userName,
-    createdAt: new Date().toISOString()
-  };
-  
-  requests.push(newRequest);
-  
-  res.status(201).json({
-    message: 'Request created successfully',
-    request: newRequest
-  });
-});
+// POST /api/requests - create
+router.post("/", async (req, res) => {
+  try {
+    const { title, description, category, deadline, location, type = "Free", userId } = req.body;
+    if (!title) return res.status(400).json({ error: "Title is required" });
+    if (!userId) return res.status(400).json({ error: "userId is required" });
 
-// PUT /api/requests/:id - Update request
-router.put('/:id', (req, res) => {
-  const requestId = parseInt(req.params.id);
-  const requestIndex = requests.findIndex(r => r.id === requestId);
-  
-  if (requestIndex === -1) {
-    return res.status(404).json({ error: 'Request not found' });
+    const user = await User.findById(userId);
+    if (!user) return res.status(400).json({ error: "User not found" });
+
+    const newRequest = new Request({
+      title,
+      description,
+      category,
+      deadline,
+      location,
+      type,
+      user: user._id
+    });
+
+    await newRequest.save();
+    const populated = await Request.findById(newRequest._id).populate("user", "name university avatar");
+    res.status(201).json({ message: "Request created successfully", request: populated });
+  } catch (err) {
+    console.error("POST /api/requests error:", err);
+    res.status(400).json({ error: "Failed to create request", message: err.message });
   }
-  
-  requests[requestIndex] = { ...requests[requestIndex], ...req.body };
-  
-  res.json({
-    message: 'Request updated successfully',
-    request: requests[requestIndex]
-  });
 });
 
-// DELETE /api/requests/:id - Delete request
-router.delete('/:id', (req, res) => {
-  const requestId = parseInt(req.params.id);
-  const requestIndex = requests.findIndex(r => r.id === requestId);
-  
-  if (requestIndex === -1) {
-    return res.status(404).json({ error: 'Request not found' });
+// PUT /api/requests/:id - update
+router.put("/:id", async (req, res) => {
+  try {
+    const updates = req.body;
+    const request = await Request.findByIdAndUpdate(req.params.id, updates, { new: true }).populate(
+      "user",
+      "name university avatar"
+    );
+    if (!request) return res.status(404).json({ error: "Request not found" });
+    res.json({ message: "Request updated successfully", request });
+  } catch (err) {
+    console.error("PUT /api/requests/:id error:", err);
+    res.status(400).json({ error: "Failed to update request", message: err.message });
   }
-  
-  requests.splice(requestIndex, 1);
-  
-  res.json({
-    message: 'Request deleted successfully'
-  });
 });
 
-module.exports = router;
+// DELETE /api/requests/:id - delete
+router.delete("/:id", async (req, res) => {
+  try {
+    const request = await Request.findByIdAndDelete(req.params.id);
+    if (!request) return res.status(404).json({ error: "Request not found" });
+    res.json({ message: "Request deleted successfully" });
+  } catch (err) {
+    console.error("DELETE /api/requests/:id error:", err);
+    res.status(500).json({ error: "Server error", message: err.message });
+  }
+});
+
+export default router;
