@@ -60,13 +60,13 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-background)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-[var(--color-primary)] via-[var(--color-primary)] to-[var(--color-accent)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-[var(--color-primary)] mb-2">SkillSwap</h1>
-          <h2 className="text-2xl font-semibold text-[var(--color-primary)] mb-2">Join Our Community</h2>
-          <p className="text-[var(--color-muted)]">Create your account to start exchanging skills</p>
+          <h1 className="text-4xl font-bold text-white mb-2">SkillSwap</h1>
+          <h2 className="text-2xl font-semibold text-white mb-2">Join Our Community</h2>
+          <p className="text-white/80">Create your account to start exchanging skills</p>
         </div>
 
         {/* Error Message */}

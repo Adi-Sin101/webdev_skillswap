@@ -40,7 +40,11 @@ router.post("/register", async (req, res) => {
       university: university || "",
       bio: bio || "",
       skills: skills || [],
-      avatar: `https://randomuser.me/api/portraits/${Math.random() > 0.5 ? 'men' : 'women'}/${Math.floor(Math.random() * 100)}.jpg`
+      avatar: `https://randomuser.me/api/portraits/${Math.random() > 0.5 ? 'men' : 'women'}/${Math.floor(Math.random() * 100)}.jpg`,
+      // Initialize default values
+      badges: ["New User"],
+      rating: 0,
+      completedActivities: 0
     });
 
     await newUser.save();

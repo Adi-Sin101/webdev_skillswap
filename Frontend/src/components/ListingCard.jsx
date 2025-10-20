@@ -1,7 +1,61 @@
-import React from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from '../contexts/AuthContext';
+import ResponseModal from './ResponseModal';
 
 
 const ListingCard = ({ post }) => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [showResponseModal, setShowResponseModal] = useState(false);
+
+  const handleViewProfile = () => {
+    if (post.posterId) {
+      navigate(`/profile/${post.posterId}`);
+    } else {
+      console.warn("No user ID available for profile navigation");
+    }
+  };
+
+  const handleQuickApply = async (formData) => {
+    if (!user?._id) {
+      alert('Please log in to apply');
+      return;
+    }
+
+    const isOffer = post.type?.toLowerCase() === 'offer';
+    const endpoint = isOffer 
+      ? `http://localhost:5000/api/responses/offers/${post.id}/apply`
+      : `http://localhost:5000/api/responses/requests/${post.id}/apply`;
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          applicant: user._id,
+          ...formData
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert(isOffer ? 'Application submitted successfully!' : 'Offer to help submitted successfully!');
+        setShowResponseModal(false);
+      } else {
+        alert(`Error: ${data.error}`);
+      }
+    } catch (error) {
+      console.error('Error submitting application:', error);
+      alert('Network error. Please try again.');
+    }
+  };
+
+  const canApply = user?._id && user._id !== post.posterId;
+
   return (
   <div className="bg-white rounded-xl shadow-2xl flex flex-row overflow-hidden p-4 w-full mb-4 border border-[var(--color-border)]" style={{ boxShadow: '0 4px 24px 0 rgba(60,80,120,0.10)' }}>
       {/* Profile Left */}
@@ -33,11 +87,38 @@ const ListingCard = ({ post }) => {
           <span className="block text-xs text-gray-600 font-semibold mb-1">Details:</span>
           <span className="block text-xs text-gray-700">{post.details || "No additional details provided."}</span>
         </div>
-        <div className="flex gap-2 mt-2">
-          <button className="px-4 py-1 rounded-lg font-bold shadow bg-[var(--color-accent)] text-[var(--color-surface)] hover:opacity-80 transition text-xs">Message</button>
-          <button className="px-4 py-1 rounded-lg font-bold shadow border border-[var(--color-accent)] text-[var(--color-accent)] bg-[var(--color-surface)] hover:bg-[var(--color-accent)] hover:text-[var(--color-surface)] transition text-xs">View Profile</button>
+        <div className="flex gap-2 mt-2 flex-wrap">
+          {canApply && (
+            <button 
+              onClick={() => setShowResponseModal(true)}
+              className="px-4 py-1 rounded-lg font-bold shadow bg-[var(--color-accent)] text-[var(--color-surface)] hover:opacity-80 transition text-xs"
+            >
+              {post.type?.toLowerCase() === 'offer' ? 'Apply Now' : 'Offer Help'}
+            </button>
+          )}
+          <button 
+            onClick={() => navigate(`/${post.type.toLowerCase()}-details/${post.id}`)}
+            className="px-4 py-1 rounded-lg font-bold shadow bg-[var(--color-primary)] text-white hover:opacity-80 transition text-xs"
+          >
+            View Details
+          </button>
+          <button 
+            onClick={handleViewProfile}
+            className="px-4 py-1 rounded-lg font-bold shadow border border-[var(--color-accent)] text-[var(--color-accent)] bg-[var(--color-surface)] hover:bg-[var(--color-accent)] hover:text-[var(--color-surface)] transition text-xs"
+          >
+            View Profile
+          </button>
         </div>
       </div>
+      
+      {/* Response Modal */}
+      <ResponseModal
+        isOpen={showResponseModal}
+        onClose={() => setShowResponseModal(false)}
+        item={post}
+        type={post.type?.toLowerCase()}
+        onSubmit={handleQuickApply}
+      />
     </div>
   );
 };

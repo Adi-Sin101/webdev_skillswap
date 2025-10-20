@@ -10,8 +10,13 @@ const UserSchema = new mongoose.Schema({
   avatar: String,
   social: {
     linkedin: String,
-    github: String
+    github: String,
+    email: String
   },
+  // Add badges and rating fields used in frontend
+  badges: { type: [String], default: ["New User"] },
+  rating: { type: Number, default: 0, min: 0, max: 5 },
+  completedActivities: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
 

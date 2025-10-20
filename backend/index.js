@@ -9,6 +9,8 @@ import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
 import offerRoutes from './routes/offers.js';
 import requestRoutes from './routes/requests.js';
+import notificationRoutes from './routes/notifications.js';
+import responseRoutes from './routes/responses.js';
 
 dotenv.config();
 connectDB();
@@ -27,6 +29,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/offers', offerRoutes);
 app.use('/api/requests', requestRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/responses', responseRoutes);
 
 // Root route
 app.get('/', (req, res) => {
@@ -37,7 +41,9 @@ app.get('/', (req, res) => {
       auth: '/api/auth',
       users: '/api/users', 
       offers: '/api/offers',
-      requests: '/api/requests'
+      requests: '/api/requests',
+      notifications: '/api/notifications',
+      responses: '/api/responses'
     }
   });
 });

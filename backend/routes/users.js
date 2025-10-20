@@ -57,6 +57,18 @@ router.put("/:id", async (req, res) => {
   }
 });
 
+// GET /api/users/email/:email - get user by email (for profile lookups)
+router.get("/email/:email", async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.params.email }).select("-password");
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json({ message: "User retrieved successfully", user });
+  } catch (err) {
+    console.error("GET /api/users/email/:email error:", err);
+    res.status(500).json({ error: "Server error", message: err.message });
+  }
+});
+
 // DELETE /api/users/:id - delete user
 router.delete("/:id", async (req, res) => {
   try {

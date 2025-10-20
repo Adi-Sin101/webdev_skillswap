@@ -10,7 +10,11 @@ import FindSkills from './pages/findskills/FindSkills.jsx'
 import Profile from './pages/profile/Profile.jsx'
 import MyOffers from './pages/profile/MyOffers.jsx'
 import MyRequests from './pages/profile/MyRequests.jsx'
+import MyApplications from './pages/profile/MyApplications.jsx'
 import CompletedActivities from './pages/profile/CompletedActivities.jsx'
+import Notifications from './pages/notifications/Notifications.jsx'
+import OfferDetails from './pages/offers/OfferDetails.jsx'
+import RequestDetails from './pages/requests/RequestDetails.jsx'
 import RouteError from './components/RouteError.jsx'
 import DiscoverProfiles from './pages/discover/DiscoverProfiles.jsx'
 import Login from './pages/auth/Login.jsx'
@@ -49,12 +53,28 @@ const router = createBrowserRouter([
         element: <MyRequests />,
       },
       {
+        path: '/my-applications',
+        element: <MyApplications />,
+      },
+      {
         path: '/completed-activities',
         element: <CompletedActivities />,
       },
       {
+        path: '/notifications',
+        element: <Notifications />,
+      },
+      {
         path: '/discover',
         element: <DiscoverProfiles />,
+      },
+      {
+        path: '/offer-details/:id',
+        element: <OfferDetails />,
+      },
+      {
+        path: '/request-details/:id',
+        element: <RequestDetails />,
       },
     ],
   },

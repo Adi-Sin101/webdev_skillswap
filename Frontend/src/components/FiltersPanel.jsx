@@ -89,6 +89,7 @@ const FiltersPanel = ({ setFilters }) => {
     { name: "Type", options: ["Offer", "Request"], selected: "" },
     { name: "Category", options: ["Coding", "Design", "Tutoring"], selected: "" },
     { name: "Location", options: ["MIT", "Stanford", "KUET"], selected: "" },
+    { name: "Availability", options: ["Morning", "Afternoon", "Evening", "Weekends", "Flexible"], selected: "" },
     { name: "Free/Paid", options: ["Free", "Paid"], selected: "" },
   ]);
 
@@ -98,7 +99,13 @@ const FiltersPanel = ({ setFilters }) => {
   useEffect(() => {
     const appliedFilters = {};
     filters.forEach((f) => {
-      if (f.selected) appliedFilters[f.name.toLowerCase()] = f.selected;
+      if (f.selected) {
+        // Map filter names to the correct key names used in filtering
+        const filterKey = f.name.toLowerCase() === 'free/paid' ? 'free' : 
+                         f.name.toLowerCase() === 'availability' ? 'availability' : 
+                         f.name.toLowerCase();
+        appliedFilters[filterKey] = f.selected;
+      }
     });
     setFilters(appliedFilters);
   }, [filters]);
