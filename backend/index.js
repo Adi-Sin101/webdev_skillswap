@@ -3,6 +3,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import connectDB from './config/connectDB.js';
+import { errorHandler } from './middleware/errorHandler.js';
 
 // Import routes
 import authRoutes from './routes/auth.js';
@@ -61,14 +62,8 @@ app.use((req, res) => {
   });
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ 
-    error: 'Something went wrong!',
-    message: err.message
-  });
-});
+// Global error handling middleware (must be last)
+app.use(errorHandler);
 
 app.listen(port, () => {
   console.log(`SkillSwap Backend server running on port ${port}`);
