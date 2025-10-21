@@ -56,6 +56,7 @@ const router = createBrowserRouter([
         path: '/my-applications',
         element: <MyApplications />,
       },
+      // accepted-swaps removed; functionality consolidated into MyApplications
       {
         path: '/completed-activities',
         element: <CompletedActivities />,

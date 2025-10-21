@@ -6,6 +6,15 @@ const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // 'all', 'unread', 'read'
+  const [actionLoading, setActionLoading] = useState({});
+
+  // Helper to set loading state for specific notification actions
+  const setNotificationLoading = (notificationId, isLoading) => {
+    setActionLoading(prev => ({
+      ...prev,
+      [notificationId]: isLoading
+    }));
+  };
 
   // Dummy notifications data (replace with API call later)
   const dummyNotifications = [
@@ -114,6 +123,12 @@ const Notifications = () => {
 
     if (user && user._id) {
       fetchNotifications();
+      
+      // Auto-refresh every 30 seconds
+      const intervalId = setInterval(fetchNotifications, 30000);
+      
+      // Cleanup interval on unmount
+      return () => clearInterval(intervalId);
     }
   }, [user]);
 
@@ -176,6 +191,81 @@ const Notifications = () => {
     }
   };
 
+  // Connection request handlers
+  const handleAcceptConnection = async (notification) => {
+    const connectionId = notification.actionUrl?.split('connection=')[1];
+    if (!connectionId) {
+      alert('Connection information not found');
+      return;
+    }
+
+    setNotificationLoading(notification._id, true);
+    try {
+      const response = await fetch(`http://localhost:5000/api/connections/${connectionId}/accept`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user._id })
+      });
+
+      if (response.ok) {
+        // Mark notification as read and update its type
+        setNotifications(prev =>
+          prev.map(notif =>
+            notif._id === notification._id
+              ? { ...notif, isRead: true, type: 'connection_accepted_by_me' }
+              : notif
+          )
+        );
+        alert('Connection request accepted!');
+      } else {
+        const data = await response.json();
+        alert(`Error: ${data.error || 'Failed to accept connection'}`);
+      }
+    } catch (error) {
+      console.error('Error accepting connection:', error);
+      alert('Network error. Please try again.');
+    } finally {
+      setNotificationLoading(notification._id, false);
+    }
+  };
+
+  const handleIgnoreConnection = async (notification) => {
+    const connectionId = notification.actionUrl?.split('connection=')[1];
+    if (!connectionId) {
+      alert('Connection information not found');
+      return;
+    }
+
+    setNotificationLoading(notification._id, true);
+    try {
+      const response = await fetch(`http://localhost:5000/api/connections/${connectionId}/ignore`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user._id })
+      });
+
+      if (response.ok) {
+        // Mark notification as read and update its type
+        setNotifications(prev =>
+          prev.map(notif =>
+            notif._id === notification._id
+              ? { ...notif, isRead: true, type: 'connection_ignored_by_me' }
+              : notif
+          )
+        );
+        alert('Connection request ignored.');
+      } else {
+        const data = await response.json();
+        alert(`Error: ${data.error || 'Failed to ignore connection'}`);
+      }
+    } catch (error) {
+      console.error('Error ignoring connection:', error);
+      alert('Network error. Please try again.');
+    } finally {
+      setNotificationLoading(notification._id, false);
+    }
+  };
+
   const getIcon = (type) => {
     switch (type) {
       case 'new_offer':
@@ -231,6 +321,22 @@ const Notifications = () => {
           <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
             <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+          </div>
+        );
+      case 'connection_request':
+        return (
+          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </div>
+        );
+      case 'connection_accepted':
+        return (
+          <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
         );
@@ -316,14 +422,39 @@ const Notifications = () => {
             </div>
 
             {/* Actions */}
-            {unreadCount > 0 && (
+            <div className="flex gap-3 items-center">
               <button
-                onClick={markAllAsRead}
-                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                onClick={() => {
+                  setLoading(true);
+                  fetch(`http://localhost:5000/api/notifications/user/${user._id}`)
+                    .then(res => res.json())
+                    .then(data => {
+                      if (data.notifications) {
+                        setNotifications(data.notifications);
+                      }
+                      setLoading(false);
+                    })
+                    .catch(error => {
+                      console.error('Error refreshing notifications:', error);
+                      setLoading(false);
+                    });
+                }}
+                className="text-sm text-gray-600 hover:text-gray-800 font-medium flex items-center gap-1"
               >
-                Mark all as read
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh
               </button>
-            )}
+              {unreadCount > 0 && (
+                <button
+                  onClick={markAllAsRead}
+                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  Mark all as read
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -399,9 +530,27 @@ const Notifications = () => {
                       </div>
                     </div>
 
-                    {/* Action Button */}
-                    {notification.actionUrl && (
-                      <div className="mt-3">
+                    {/* Action Buttons */}
+                    <div className="mt-3">
+                      {/* Special handling for connection requests */}
+                      {notification.type === 'connection_request' && !notification.isRead ? (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleAcceptConnection(notification)}
+                            disabled={actionLoading[notification._id]}
+                            className="px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-lg hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {actionLoading[notification._id] ? 'Loading...' : 'Accept'}
+                          </button>
+                          <button
+                            onClick={() => handleIgnoreConnection(notification)}
+                            disabled={actionLoading[notification._id]}
+                            className="px-4 py-2 bg-gray-500 text-white text-sm font-medium rounded-lg hover:bg-gray-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {actionLoading[notification._id] ? 'Loading...' : 'Ignore'}
+                          </button>
+                        </div>
+                      ) : notification.actionUrl ? (
                         <a
                           href={notification.actionUrl}
                           className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-accent)] hover:text-blue-800"
@@ -411,8 +560,8 @@ const Notifications = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                           </svg>
                         </a>
-                      </div>
-                    )}
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               </div>

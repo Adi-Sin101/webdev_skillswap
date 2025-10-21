@@ -65,6 +65,12 @@ const Profile = () => {
   const [editingOfferId, setEditingOfferId] = useState(null);
   const [editingRequestId, setEditingRequestId] = useState(null);
   
+  // Connection state
+  const [connectionStatus, setConnectionStatus] = useState(null); // 'none', 'pending', 'accepted', 'ignored'
+  const [connectionData, setConnectionData] = useState(null);
+  const [connectionLoading, setConnectionLoading] = useState(false);
+  const [connectionsCount, setConnectionsCount] = useState(0);
+  
   // Edit profile state
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -83,6 +89,15 @@ const Profile = () => {
   // Get logged-in user ID from auth context
   const loggedInUserId = authUser?._id;
   const isOwner = !id || id === loggedInUserId;
+
+  // Debug logging
+  useEffect(() => {
+    console.log('🔍 Profile Debug Info:');
+    console.log('Auth User:', authUser);
+    console.log('Logged In User ID:', loggedInUserId);
+    console.log('Profile User ID (from URL):', id);
+    console.log('Is Owner:', isOwner);
+  }, [authUser, loggedInUserId, id, isOwner]);
 
   // Offer form state
   const [offerForm, setOfferForm] = useState({
@@ -275,6 +290,172 @@ const Profile = () => {
       // TODO: Implement delete account functionality
       alert('Delete account functionality will be implemented soon.');
       setActionMenuOpen(false);
+    }
+  };
+
+  // Connection handlers
+  const fetchConnectionStatus = async () => {
+    if (!user?._id || !loggedInUserId || isOwner) {
+      console.log('⏭️ Skipping connection status fetch:', { 
+        hasUser: !!user?._id, 
+        hasLoggedInUserId: !!loggedInUserId, 
+        isOwner 
+      });
+      return;
+    }
+    
+    console.log('🔍 Fetching connection status between:', loggedInUserId, 'and', user._id);
+    
+    try {
+      const response = await fetch(`http://localhost:5000/api/connections/status/${loggedInUserId}/${user._id}`);
+      const data = await response.json();
+      
+      console.log('Connection status response:', data);
+      
+      if (response.ok) {
+        setConnectionStatus(data.status);
+        setConnectionData(data.connection);
+        console.log('✅ Connection status set to:', data.status);
+      } else {
+        console.error('❌ Failed to fetch connection status:', data);
+      }
+    } catch (error) {
+      console.error('❌ Error fetching connection status:', error);
+    }
+  };
+
+  const fetchConnectionsCount = async () => {
+    if (!user?._id) return;
+    
+    try {
+      const response = await fetch(`http://localhost:5000/api/connections/user/${user._id}?status=accepted`);
+      const data = await response.json();
+      
+      if (response.ok) {
+        setConnectionsCount(data.counts?.accepted || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching connections count:', error);
+    }
+  };
+
+  const handleSendConnectionRequest = async () => {
+    if (!user?._id || !loggedInUserId) {
+      console.error('❌ Missing required IDs:', { userId: user?._id, loggedInUserId });
+      alert('Error: User information is missing. Please refresh the page and try again.');
+      return;
+    }
+    
+    setConnectionLoading(true);
+    
+    const requestBody = {
+      requesterId: loggedInUserId,
+      recipientId: user._id,
+      message: `Hi ${user.name}, I'd like to connect with you on SkillSwap!`
+    };
+    
+    console.log('📨 Sending connection request:', requestBody);
+    
+    try {
+      const response = await fetch('http://localhost:5000/api/connections/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      });
+
+      const data = await response.json();
+      console.log('Response status:', response.status);
+      console.log('Response data:', data);
+      
+      if (response.ok) {
+        setConnectionStatus('pending');
+        setConnectionData(data.connection);
+        alert('Connection request sent successfully!');
+      } else {
+        console.error('❌ Connection request failed:', data);
+        alert(`Error: ${data.error || 'Failed to send connection request'}`);
+      }
+    } catch (error) {
+      console.error('❌ Network error sending connection request:', error);
+      alert('Network error. Please try again.');
+    } finally {
+      setConnectionLoading(false);
+    }
+  };
+
+  const handleAcceptConnection = async () => {
+    if (!connectionData?._id) return;
+    
+    setConnectionLoading(true);
+    try {
+      const response = await fetch(`http://localhost:5000/api/connections/${connectionData._id}/accept`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: loggedInUserId })
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        setConnectionStatus('accepted');
+        setConnectionData(data.connection);
+        alert('Connection request accepted!');
+      } else {
+        alert(`Error: ${data.error || 'Failed to accept connection'}`);
+      }
+    } catch (error) {
+      console.error('Error accepting connection:', error);
+      alert('Network error. Please try again.');
+    } finally {
+      setConnectionLoading(false);
+    }
+  };
+
+  const handleIgnoreConnection = async () => {
+    if (!connectionData?._id) return;
+    
+    setConnectionLoading(true);
+    try {
+      const response = await fetch(`http://localhost:5000/api/connections/${connectionData._id}/ignore`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: loggedInUserId })
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        setConnectionStatus('ignored');
+        setConnectionData(data.connection);
+        alert('Connection request ignored.');
+      } else {
+        alert(`Error: ${data.error || 'Failed to ignore connection'}`);
+      }
+    } catch (error) {
+      console.error('Error ignoring connection:', error);
+      alert('Network error. Please try again.');
+    } finally {
+      setConnectionLoading(false);
+    }
+  };
+
+  const getConnectionButtonText = () => {
+    if (connectionLoading) return 'Loading...';
+    
+    switch (connectionStatus) {
+      case 'pending':
+        // Check if current user is the requester or recipient
+        if (connectionData?.requester._id === loggedInUserId) {
+          return 'Request Sent';
+        } else {
+          return 'Respond to Request';
+        }
+      case 'accepted':
+        return 'Connected';
+      case 'ignored':
+        return 'Request Ignored';
+      default:
+        return 'Connect';
     }
   };
 
@@ -481,6 +662,17 @@ const Profile = () => {
       fetchData();
     }
   }, [id, authUser, authLoading]);
+
+  // Fetch connection status when viewing another user's profile
+  useEffect(() => {
+    if (user && loggedInUserId && !isOwner && !authLoading) {
+      fetchConnectionStatus();
+    }
+    // Fetch connections count for any user (including own profile)
+    if (user && !authLoading) {
+      fetchConnectionsCount();
+    }
+  }, [user, loggedInUserId, isOwner, authLoading]);
 
   // Handle edit states from navigation
   useEffect(() => {
@@ -731,6 +923,7 @@ const Profile = () => {
                     </svg>
                     View Applications
                   </Link>
+                  {/* Accepted Swaps page removed; consolidated into MyApplications */}
                   <button 
                     className="px-4 py-2 hover:bg-gray-100 text-gray-700 text-sm text-left flex items-center gap-2" 
                     onClick={handleLogout}
@@ -753,66 +946,60 @@ const Profile = () => {
               )}
             </div>
           ) : (
-            <div className="relative">
-              <button
-                className="bg-[var(--color-accent)] text-[var(--color-surface)] font-bold px-6 py-2 rounded-lg shadow hover:opacity-90 transition flex items-center gap-2"
-                onClick={() => setConnectMenuOpen((open) => !open)}
-              >
-                Connect
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-              </button>
-              {connectMenuOpen && (
-                <div className="absolute top-12 right-0 z-10 bg-white border border-gray-200 rounded-xl shadow-lg py-2 w-56 flex flex-col text-left animate-fade-in">
-                  {/* Email */}
-                  {(user?.social?.email || user?.email) && (
-                    <a 
-                      href={`mailto:${user?.social?.email || user?.email}`} 
-                      className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-gray-700 text-sm"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                      Email
-                    </a>
-                  )}
-                  
-                  {/* LinkedIn */}
-                  {user?.social?.linkedin && (
-                    <a 
-                      href={user.social.linkedin} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-gray-700 text-sm"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-blue-700" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.761 0 5-2.239 5-5v-14c0-2.761-2.239-5-5-5zm-11 19h-3v-10h3v10zm-1.5-11.268c-.966 0-1.75-.784-1.75-1.75s.784-1.75 1.75-1.75 1.75.784 1.75 1.75-.784 1.75-1.75 1.75zm13.5 11.268h-3v-5.604c0-1.337-.026-3.063-1.867-3.063-1.868 0-2.154 1.459-2.154 2.967v5.7h-3v-10h2.881v1.367h.041c.401-.761 1.381-1.563 2.841-1.563 3.039 0 3.601 2.001 3.601 4.601v5.595z"/>
-                      </svg>
-                      LinkedIn
-                    </a>
-                  )}
-                  
-                  {/* GitHub */}
-                  {user?.social?.github && (
-                    <a 
-                      href={user.social.github} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-gray-700 text-sm"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-800" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.757-1.333-1.757-1.089-.745.083-.729.083-.729 1.205.084 1.84 1.236 1.84 1.236 1.07 1.834 2.809 1.304 3.495.997.108-.775.418-1.305.762-1.605-2.665-.305-5.466-1.332-5.466-5.93 0-1.31.469-2.381 1.236-3.221-.124-.303-.535-1.523.117-3.176 0 0 1.008-.322 3.301 1.23a11.52 11.52 0 013.003-.404c1.018.005 2.045.138 3.003.404 2.291-1.553 3.297-1.23 3.297-1.23.653 1.653.242 2.873.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.61-2.803 5.624-5.475 5.921.43.371.823 1.102.823 2.222 0 1.606-.014 2.898-.014 3.293 0 .322.218.694.825.576C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
-                      </svg>
-                      GitHub
-                    </a>
-                  )}
-                  
-                  {/* Show a message if no contact info is available */}
-                  {!user?.social?.email && !user?.email && !user?.social?.linkedin && !user?.social?.github && (
-                    <div className="px-4 py-2 text-gray-500 text-sm text-center">
-                      No contact information available
-                    </div>
-                  )}
+            <div className="flex flex-col gap-2 items-end">
+              {/* Connection Status and Actions */}
+              {connectionStatus === 'pending' && connectionData?.requester._id !== loggedInUserId && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleAcceptConnection}
+                    disabled={connectionLoading}
+                    className="bg-green-500 text-white font-semibold px-4 py-2 rounded-lg shadow hover:bg-green-600 transition disabled:opacity-50"
+                  >
+                    {connectionLoading ? 'Loading...' : 'Accept'}
+                  </button>
+                  <button
+                    onClick={handleIgnoreConnection}
+                    disabled={connectionLoading}
+                    className="bg-gray-500 text-white font-semibold px-4 py-2 rounded-lg shadow hover:bg-gray-600 transition disabled:opacity-50"
+                  >
+                    {connectionLoading ? 'Loading...' : 'Ignore'}
+                  </button>
                 </div>
+              )}
+              
+              {/* Main Connect Button */}
+              <button
+                onClick={(connectionStatus === 'none' || connectionStatus === null) ? handleSendConnectionRequest : undefined}
+                disabled={connectionLoading || connectionStatus === 'pending' || connectionStatus === 'accepted' || connectionStatus === 'ignored'}
+                className={`font-bold px-6 py-2 rounded-lg shadow transition flex items-center gap-2 ${
+                  connectionStatus === 'accepted'
+                    ? 'bg-green-100 text-green-800 border border-green-300'
+                    : connectionStatus === 'pending' && connectionData?.requester._id === loggedInUserId
+                    ? 'bg-yellow-100 text-yellow-800 border border-yellow-300'
+                    : connectionStatus === 'ignored'
+                    ? 'bg-gray-100 text-gray-600 border border-gray-300'
+                    : 'bg-[var(--color-accent)] text-[var(--color-surface)] hover:opacity-90'
+                } ${connectionLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {/* Connection Icon */}
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                {getConnectionButtonText()}
+              </button>
+              
+              {/* Connection pending message for requesters */}
+              {connectionStatus === 'pending' && connectionData?.requester._id === loggedInUserId && (
+                <p className="text-sm text-gray-500 text-center">
+                  Request sent • Waiting for response
+                </p>
+              )}
+              
+              {/* Connected message */}
+              {connectionStatus === 'accepted' && (
+                <p className="text-sm text-green-600 text-center font-medium">
+                  ✓ You're connected
+                </p>
               )}
             </div>
           )}
@@ -825,6 +1012,11 @@ const Profile = () => {
           <span className="text-yellow-400 text-2xl">★</span>
           <span className="font-bold text-lg">{user?.rating || 4.5}</span>
           <span className="text-xs text-gray-500">Rating</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <span className="text-blue-500 text-2xl">🤝</span>
+          <span className="font-bold text-lg">{connectionsCount}</span>
+          <span className="text-xs text-gray-500">Connections</span>
         </div>
         <div className="flex flex-col items-center">
           <span className="text-teal-500 text-2xl">✅</span>

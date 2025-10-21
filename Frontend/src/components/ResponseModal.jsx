@@ -36,16 +36,27 @@ const ResponseModal = ({ isOpen, onClose, item, type, onSubmit }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    console.log('=== RESPONSE MODAL SUBMIT DEBUG ===');
+    console.log('Form data:', formData);
+    
     if (!formData.message.trim()) {
       alert('Please enter a message');
       return;
     }
 
+    if (!formData.availability.trim()) {
+      alert('Please specify your availability');
+      return;
+    }
+
+    console.log('✅ Validation passed, calling onSubmit...');
+    
     setLoading(true);
     try {
       await onSubmit(formData);
+      console.log('✅ onSubmit completed without throwing error');
+      // Only close and reset if successful
       onClose();
-      // Reset form
       setFormData({
         message: '',
         availability: '',
@@ -57,7 +68,8 @@ const ResponseModal = ({ isOpen, onClose, item, type, onSubmit }) => {
         }
       });
     } catch (error) {
-      console.error('Error submitting response:', error);
+      console.error('❌ Error in handleSubmit:', error);
+      // Don't close modal on error, let user see the error and try again
     } finally {
       setLoading(false);
     }
@@ -107,7 +119,7 @@ const ResponseModal = ({ isOpen, onClose, item, type, onSubmit }) => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Your Availability
+                Your Availability *
               </label>
               <input
                 type="text"
@@ -116,6 +128,7 @@ const ResponseModal = ({ isOpen, onClose, item, type, onSubmit }) => {
                 onChange={handleChange}
                 placeholder="e.g., Weekends, Mon-Wed evenings, Flexible"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
               />
             </div>
 

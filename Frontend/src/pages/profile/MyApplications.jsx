@@ -76,7 +76,7 @@ const MyApplications = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ status: newStatus, ownerId: user._id }),
       });
 
       console.log('Response status:', response.status);
@@ -97,6 +97,57 @@ const MyApplications = () => {
     } catch (error) {
       console.error('Network error:', error);
       alert(`Network error: ${error.message}. Please check if the backend server is running.`);
+    }
+  };
+
+  const handleEmailExchanged = async (responseId) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/responses/${responseId}/email-exchanged`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: user._id }),
+      });
+
+      if (response.ok) {
+        setApplications(prev => prev.map(app => 
+          app._id === responseId ? { ...app, emailExchanged: true } : app
+        ));
+        alert('Email exchange confirmed! You can now proceed with the skill swap.');
+      } else {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Network error:', error);
+      alert(`Network error: ${error.message}`);
+    }
+  };
+
+  const handleMarkComplete = async (responseId) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/responses/${responseId}/complete`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: user._id }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setApplications(prev => prev.map(app => 
+          app._id === responseId ? { ...app, ...data.response } : app
+        ));
+        alert(data.message);
+      } else {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Network error:', error);
+      alert(`Network error: ${error.message}`);
     }
   };
 
@@ -166,9 +217,21 @@ const MyApplications = () => {
                       <span className="font-medium text-[var(--color-primary)]">Timeline:</span>
                       <span className="ml-2 text-[var(--color-muted)]">{application.proposedTimeline || 'Not specified'}</span>
                     </div>
-                    <div>
-                      <span className="font-medium text-[var(--color-primary)]">Email:</span>
-                      <span className="ml-2 text-[var(--color-muted)]">{application.contactInfo?.email || application.applicant.email}</span>
+                    <div className="col-span-2 md:col-span-1">
+                      <span className="font-medium text-[var(--color-primary)]">Contact Email</span>
+                      <div className="mt-1 flex items-center gap-2">
+                        <input
+                          readOnly
+                          value={application.contactInfo?.email || application.applicant.email || ''}
+                          className="w-full border border-gray-200 rounded px-2 py-1 text-sm bg-gray-50"
+                        />
+                        <a
+                          href={`mailto:${application.contactInfo?.email || application.applicant.email || ''}`}
+                          className="text-sm text-blue-600 hover:underline"
+                        >
+                          Send Email
+                        </a>
+                      </div>
                     </div>
                     <div>
                       <span className="font-medium text-[var(--color-primary)]">Applied:</span>
@@ -187,7 +250,17 @@ const MyApplications = () => {
                   </span>
                   
                   {application.status === 'pending' && (
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
+                      {/* Email exchange UI shown before accept/reject */}
+                      <div className="text-xs text-[var(--color-muted)] mr-2">
+                        Share your contact and confirm via email before accepting.
+                      </div>
+                      <button
+                        onClick={() => handleEmailExchanged(application._id)}
+                        className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors"
+                      >
+                        Confirm Email
+                      </button>
                       <button
                         onClick={() => handleUpdateStatus(application._id, 'accepted')}
                         className="px-3 py-1 bg-[var(--color-accent)] text-white rounded text-xs hover:opacity-80 transition-all"
@@ -200,6 +273,85 @@ const MyApplications = () => {
                       >
                         Reject
                       </button>
+                    </div>
+                  )}
+
+                  {application.status === 'accepted' && (
+                    <div className="flex flex-col gap-2 text-xs">
+                      {/* Step 1: Email Communication */}
+                      {!application.emailExchanged ? (
+                        <div className="flex flex-col items-end gap-2">
+                          <div className="text-right text-[var(--color-muted)]">
+                            📧 Contact via email: {application.contactInfo?.email || application.applicant.email}
+                          </div>
+                          <button
+                            onClick={() => handleEmailExchanged(application._id)}
+                            className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                          >
+                            ✅ Confirm Email Exchange
+                          </button>
+                        </div>
+                      ) : (
+                        /* Step 2: Mark as Complete */
+                        !application.isSwapCompleted ? (
+                          <div className="flex flex-col items-end gap-2">
+                            <div className="text-right text-green-600 font-medium">
+                              ✅ Email exchanged
+                            </div>
+                            {!application.isOwnerCompleted && (
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => handleMarkComplete(application._id)}
+                                  className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs"
+                                >
+                                  🎉 Mark as Complete
+                                </button>
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      const resp = await fetch(`http://localhost:5000/api/responses/${application._id}/undo-complete`, {
+                                        method: 'PUT',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ userId: user._id })
+                                      });
+                                      if (resp.ok) {
+                                        const data = await resp.json();
+                                        setApplications(prev => prev.map(app => app._id === application._id ? { ...app, ...data.response } : app));
+                                        alert('Undo successful');
+                                      } else {
+                                        const err = await resp.json();
+                                        alert(`Error: ${err.error || 'Unknown error'}`);
+                                      }
+                                    } catch (e) {
+                                      console.error('Network error:', e);
+                                      alert('Network error');
+                                    }
+                                  }}
+                                  className="px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors text-xs"
+                                >
+                                  ↩️ Undo Complete
+                                </button>
+                              </div>
+                            )}
+                            {!application.isOwnerCompleted && (
+                              <button
+                                onClick={() => handleMarkComplete(application._id)}
+                                className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                              >
+                                🎉 Mark as Complete
+                              </button>
+                            )}
+                          </div>
+                        ) : (
+                          /* Step 3: Completed */
+                          <div className="text-right">
+                            <div className="text-green-600 font-bold">🎉 Skill Swap Completed!</div>
+                            <div className="text-xs text-[var(--color-muted)]">
+                              Completed on {new Date(application.swapCompletedAt).toLocaleDateString()}
+                            </div>
+                          </div>
+                        )
+                      )}
                     </div>
                   )}
                 </div>

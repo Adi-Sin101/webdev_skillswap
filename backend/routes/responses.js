@@ -6,7 +6,10 @@ import {
   getRequestResponses, 
   getOfferResponseCounts, 
   getRequestResponseCounts, 
-  updateResponseStatus 
+  updateResponseStatus,
+  markEmailExchanged,
+  markSwapComplete,
+  getUserAcceptedResponses
 } from '../controllers/responseController.js';
 import { validateObjectId } from '../middleware/validation.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
@@ -33,5 +36,21 @@ router.get('/requests/:id/responses', validateObjectId, asyncHandler(getRequestR
 
 // Update response status (accept/reject)
 router.put('/:id/status', validateObjectId, asyncHandler(updateResponseStatus));
+
+// Mark email as exchanged
+router.put('/:id/email-exchanged', validateObjectId, asyncHandler(markEmailExchanged));
+
+// Mark swap as complete
+router.put('/:id/complete', validateObjectId, asyncHandler(markSwapComplete));
+
+// Undo swap completion
+router.put('/:id/undo-complete', validateObjectId, asyncHandler(async (req, res) => {
+  // Dynamic import to avoid circular issues
+  const { undoSwapComplete } = await import('../controllers/responseController.js');
+  return undoSwapComplete(req, res);
+}));
+
+// Get user's accepted responses (for dashboard)
+router.get('/user/:userId/accepted', validateObjectId, asyncHandler(getUserAcceptedResponses));
 
 export default router;

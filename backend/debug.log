@@ -1,0 +1,67 @@
+[2025-10-20T23:27:27.915Z] === APPLY TO OFFER DEBUG ===
+[2025-10-20T23:27:27.917Z] Offer ID: 68f6be1d0b1d163211089271
+[2025-10-20T23:27:27.918Z] Full request body: {
+  "applicant": "68ed7b59b3b42ea7dbc10f7c",
+  "message": "dvcx",
+  "availability": "Weekends",
+  "proposedTimeline": "This week",
+  "contactInfo": {
+    "email": "adiba0tahsin@gmail.com",
+    "phone": "",
+    "preferredContact": "email"
+  }
+}
+[2025-10-20T23:27:27.920Z] Extracted data: applicant=68ed7b59b3b42ea7dbc10f7c, message=dvcx, availability=Weekends
+[2025-10-20T23:27:27.921Z] ✅ All validations passed
+[2025-10-20T23:27:27.972Z] ✅ Offer found: new
+[2025-10-20T23:27:27.977Z] ✅ User has not applied before
+[2025-10-20T23:27:27.986Z] Attempting to save response...
+[2025-10-20T23:27:28.009Z] ❌ Error applying to offer: E11000 duplicate key error collection: mernDB.responses index: applicant_1_requestID_1 dup key: { applicant: ObjectId('68ed7b59b3b42ea7dbc10f7c'), requestID: null }
+[2025-10-20T23:27:28.011Z] Error stack: MongoServerError: E11000 duplicate key error collection: mernDB.responses index: applicant_1_requestID_1 dup key: { applicant: ObjectId('68ed7b59b3b42ea7dbc10f7c'), requestID: null }
+    at InsertOneOperation.handleOk (E:\Web Dev\webdev_skillswap\backend\node_modules\mongodb\lib\operations\insert.js:51:19)
+    at tryOperation (E:\Web Dev\webdev_skillswap\backend\node_modules\mongodb\lib\operations\execute_operation.js:214:34)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async executeOperation (E:\Web Dev\webdev_skillswap\backend\node_modules\mongodb\lib\operations\execute_operation.js:78:16)
+    at async Collection.insertOne (E:\Web Dev\webdev_skillswap\backend\node_modules\mongodb\lib\collection.js:154:16)
+[2025-10-20T23:29:50.363Z] === APPLY TO OFFER DEBUG ===
+[2025-10-20T23:29:50.365Z] Offer ID: 68f6be1d0b1d163211089271
+[2025-10-20T23:29:50.366Z] Full request body: {
+  "applicant": "68ed7b59b3b42ea7dbc10f7c",
+  "message": " rhvgn",
+  "availability": "Weekends",
+  "proposedTimeline": "This week",
+  "contactInfo": {
+    "email": "adiba0tahsin@gmail.com",
+    "phone": "",
+    "preferredContact": "email"
+  }
+}
+[2025-10-20T23:29:50.367Z] Extracted data: applicant=68ed7b59b3b42ea7dbc10f7c, message= rhvgn, availability=Weekends
+[2025-10-20T23:29:50.368Z] ✅ All validations passed
+[2025-10-20T23:29:50.409Z] ✅ Offer found: new
+[2025-10-20T23:29:50.450Z] ✅ User has not applied before
+[2025-10-20T23:29:50.460Z] Attempting to save response...
+[2025-10-20T23:29:50.513Z] ✅ Response saved successfully
+[2025-10-20T23:29:50.525Z] ✅ Notification created
+[2025-10-20T23:29:50.526Z] ✅ Application completed successfully
+[2025-10-21T00:02:47.570Z] === APPLY TO OFFER DEBUG ===
+[2025-10-21T00:02:47.572Z] Offer ID: 68f6cd8f68a79acecbc2900b
+[2025-10-21T00:02:47.582Z] Full request body: {
+  "applicant": "68ed7b59b3b42ea7dbc10f7c",
+  "message": "nm",
+  "availability": "Weekends",
+  "proposedTimeline": "This week",
+  "contactInfo": {
+    "email": "adiba0tahsin@gmail.com",
+    "phone": "",
+    "preferredContact": "email"
+  }
+}
+[2025-10-21T00:02:47.585Z] Extracted data: applicant=68ed7b59b3b42ea7dbc10f7c, message=nm, availability=Weekends
+[2025-10-21T00:02:47.587Z] ✅ All validations passed
+[2025-10-21T00:02:47.598Z] ✅ Offer found:  n,.k
+[2025-10-21T00:02:47.607Z] ✅ User has not applied before
+[2025-10-21T00:02:47.613Z] Attempting to save response...
+[2025-10-21T00:02:47.622Z] ✅ Response saved successfully
+[2025-10-21T00:02:47.633Z] ✅ Notification created
+[2025-10-21T00:02:47.635Z] ✅ Application completed successfully

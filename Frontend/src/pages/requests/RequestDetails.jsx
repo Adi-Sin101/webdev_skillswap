@@ -65,6 +65,8 @@ const RequestDetails = () => {
       return;
     }
 
+    console.log('Submitting offer to help with data:', { applicant: user._id, ...formData });
+
     try {
       const response = await fetch(`http://localhost:5000/api/responses/requests/${id}/apply`, {
         method: 'POST',
@@ -73,11 +75,19 @@ const RequestDetails = () => {
         },
         body: JSON.stringify({
           applicant: user._id,
-          ...formData
+          message: formData.message || '',
+          availability: formData.availability || '',
+          proposedTimeline: formData.proposedTimeline || '',
+          contactInfo: {
+            email: formData.contactInfo?.email || user.email || '',
+            phone: formData.contactInfo?.phone || '',
+            preferredContact: formData.contactInfo?.preferredContact || 'email'
+          }
         }),
       });
 
       const data = await response.json();
+      console.log('Response:', response.status, data);
 
       if (response.ok) {
         alert('Offer to help submitted successfully!');
@@ -85,11 +95,11 @@ const RequestDetails = () => {
         setResponseCount(prev => prev + 1);
         setShowResponseModal(false);
       } else {
-        alert(`Error: ${data.error}`);
+        alert(`Error: ${data.error || 'Failed to submit offer to help'}`);
       }
     } catch (error) {
-      console.error('Error offering to help:', error);
-      alert('Network error. Please try again.');
+      console.error('Network error:', error);
+      alert(`Network error: ${error.message}`);
     }
   };
 

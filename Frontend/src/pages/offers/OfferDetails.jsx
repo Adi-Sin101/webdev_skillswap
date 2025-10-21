@@ -62,8 +62,10 @@ const OfferDetails = () => {
   const handleApplyToOffer = async (formData) => {
     if (!user?._id) {
       alert('Please log in to apply to this offer');
-      return;
+      throw new Error('User not logged in');
     }
+
+    console.log('Submitting application with data:', { applicant: user._id, ...formData });
 
     try {
       const response = await fetch(`http://localhost:5000/api/responses/offers/${id}/apply`, {
@@ -73,23 +75,37 @@ const OfferDetails = () => {
         },
         body: JSON.stringify({
           applicant: user._id,
-          ...formData
+          message: formData.message || '',
+          availability: formData.availability || '',
+          proposedTimeline: formData.proposedTimeline || '',
+          contactInfo: {
+            email: formData.contactInfo?.email || user.email || '',
+            phone: formData.contactInfo?.phone || '',
+            preferredContact: formData.contactInfo?.preferredContact || 'email'
+          }
         }),
       });
 
       const data = await response.json();
+      console.log('Response:', response.status, data);
 
-      if (response.ok) {
-        alert('Application submitted successfully!');
-        setHasApplied(true);
-        setResponseCount(prev => prev + 1);
-        setShowResponseModal(false);
-      } else {
-        alert(`Error: ${data.error}`);
+      if (!response.ok) {
+        console.error('❌ Application failed:', data);
+        alert(`Error: ${data.error || data.details || 'Failed to submit application'}`);
+        throw new Error(data.error || 'Failed to submit application');
       }
+
+      console.log('✅ Application submitted successfully!');
+      alert('Application submitted successfully!');
+      setHasApplied(true);
+      setResponseCount(prev => prev + 1);
+      setShowResponseModal(false);
     } catch (error) {
-      console.error('Error applying to offer:', error);
-      alert('Network error. Please try again.');
+      console.error('❌ Network error:', error);
+      if (error.message !== 'User not logged in') {
+        alert(`Failed to submit application: ${error.message}`);
+      }
+      throw error; // Re-throw so the modal knows there was an error
     }
   };
 

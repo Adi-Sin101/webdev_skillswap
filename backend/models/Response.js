@@ -60,14 +60,54 @@ const responseSchema = new mongoose.Schema({
     type: String,
     enum: ['offer', 'request'],
     required: true
+  },
+  
+  // Skill swap completion tracking
+  isApplicantCompleted: {
+    type: Boolean,
+    default: false
+  },
+  
+  isOwnerCompleted: {
+    type: Boolean,
+    default: false
+  },
+  
+  isSwapCompleted: {
+    type: Boolean,
+    default: false
+  },
+  
+  // Communication and coordination
+  emailExchanged: {
+    type: Boolean,
+    default: false
+  },
+  
+  swapCompletedAt: {
+    type: Date
   }
 }, {
   timestamps: true
 });
 
 // Ensure a user can only respond once to the same offer/request
-responseSchema.index({ applicant: 1, offerID: 1 }, { unique: true, sparse: true });
-responseSchema.index({ applicant: 1, requestID: 1 }, { unique: true, sparse: true });
+// Use partial filter expressions to only apply uniqueness when the field exists
+responseSchema.index(
+  { applicant: 1, offerID: 1 }, 
+  { 
+    unique: true, 
+    partialFilterExpression: { offerID: { $type: "objectId" } }
+  }
+);
+
+responseSchema.index(
+  { applicant: 1, requestID: 1 }, 
+  { 
+    unique: true, 
+    partialFilterExpression: { requestID: { $type: "objectId" } }
+  }
+);
 
 // Index for efficient queries
 responseSchema.index({ offerID: 1, status: 1 });
