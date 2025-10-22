@@ -2,80 +2,69 @@ import React, { useState, useEffect } from "react";
 
 // Single filter component
 const Filter = ({ filter, setFilter, primaryColor = "blue-600" }) => {
-  const [open, setOpen] = useState(false);
-  const [newOption, setNewOption] = useState("");
+  const [isOpen, setIsOpen] = React.useState(false);
 
-  const addOption = () => {
-    if (newOption && !filter.options.includes(newOption)) {
-      setFilter({ ...filter, options: [newOption, ...filter.options], selected: newOption });
-      setNewOption("");
-    }
+  const handleRadioChange = (option) => {
+    setFilter({ ...filter, selected: option });
+    setIsOpen(false); // Close after selection
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      addOption();
-      e.preventDefault();
-    }
+  const clearSelection = () => {
+    setFilter({ ...filter, selected: "" });
+  };
+
+  const toggleOpen = () => {
+    setIsOpen(!isOpen);
   };
 
   return (
-  <div className="relative w-full mb-6">
+    <div className="w-48 relative">
+      {/* Filter Header/Button */}
       <div
+        onClick={toggleOpen}
+        className="cursor-pointer rounded-xl px-4 py-3 flex justify-between items-center transition-all duration-200 hover:shadow-lg border border-[var(--color-border)]"
         style={{
           background: 'var(--color-surface)',
           color: 'var(--color-primary)',
           boxShadow: '0 2px 8px 0 rgba(0,0,0,0.04)',
         }}
-        className="rounded-xl px-4 py-3 cursor-pointer flex justify-between items-center focus:outline-none transition-all duration-200 hover:shadow-lg"
-        onClick={() => setOpen(!open)}
       >
-        <span className="font-medium tracking-wide">{filter.selected || filter.name}</span>
-        <span className="ml-2 text-[var(--color-accent)] text-xs">{open ? "▲" : "▼"}</span>
+        <span className="font-medium tracking-wide text-sm">
+          {filter.selected || `${filter.name}`}
+        </span>
+        <div className="flex items-center gap-2">
+          {filter.selected && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                clearSelection();
+              }}
+              className="text-xs text-red-400 hover:text-red-600 underline"
+            >
+              ✕
+            </button>
+          )}
+          <span className="text-[var(--color-accent)] text-xs">
+            {isOpen ? "▲" : "▼"}
+          </span>
+        </div>
       </div>
 
-      {open && (
-        <div className="absolute z-20 w-full rounded-xl mt-2 shadow-xl max-h-60 overflow-auto border border-[var(--color-border)] bg-[var(--color-surface)]">
-          {/* Add new option input */}
-          <div className="flex p-3 gap-2 border-b border-[var(--color-border)] bg-[var(--color-surface)]">
-            <input
-              type="text"
-              value={newOption}
-              onChange={(e) => setNewOption(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={`Add new ${filter.name.toLowerCase()}`}
-              style={{
-                background: 'var(--color-background)',
-                color: 'var(--color-primary)',
-                border: '1px solid var(--color-border)',
-              }}
-              className="flex-1 px-3 py-2 rounded-lg focus:outline-none"
-            />
-            <button
-              onClick={addOption}
-              style={{
-                background: 'var(--color-accent)',
-                color: 'var(--color-surface)',
-              }}
-              className="px-4 rounded-lg font-bold hover:opacity-80 transition"
-            >
-              +
-            </button>
-          </div>
-
-          {/* Existing options */}
+      {/* Radio Button Options (shown when open) */}
+      {isOpen && (
+        <div className="absolute top-full left-0 right-0 z-10 mt-1 space-y-2 max-h-48 overflow-y-auto border border-[var(--color-border)] rounded-lg p-3 bg-[var(--color-surface)] shadow-lg">
           {filter.options.map((opt, idx) => (
-            <div
-              key={idx}
-              style={{ cursor: 'pointer', color: 'var(--color-primary)' }}
-              className="px-4 py-2 hover:bg-[var(--color-accent)]/10 rounded-lg transition-all duration-150"
-              onClick={() => {
-                setFilter({ ...filter, selected: opt });
-                setOpen(false);
-              }}
-            >
-              {opt}
-            </div>
+            <label key={idx} className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded">
+              <input
+                type="radio"
+                name={filter.name.toLowerCase().replace(/\s+/g, '-')}
+                value={opt}
+                checked={filter.selected === opt}
+                onChange={() => handleRadioChange(opt)}
+                className="text-[var(--color-accent)] focus:ring-[var(--color-accent)]"
+              />
+              <span className="text-[var(--color-primary)] font-medium text-sm">{opt}</span>
+            </label>
           ))}
         </div>
       )}
@@ -87,13 +76,48 @@ const Filter = ({ filter, setFilter, primaryColor = "blue-600" }) => {
 const FiltersPanel = ({ setFilters }) => {
   const [filters, setFiltersState] = useState([
     { name: "Type", options: ["Offer", "Request"], selected: "" },
-    { name: "Category", options: ["Coding", "Design", "Tutoring"], selected: "" },
-    { name: "Location", options: ["MIT", "Stanford", "KUET"], selected: "" },
-    { name: "Availability", options: ["Morning", "Afternoon", "Evening", "Weekends", "Flexible"], selected: "" },
+    { name: "Category", options: [], selected: "" },
+    { name: "University", options: [], selected: "" },
+    { name: "Availability", options: ["Weekdays", "Weekends", "Flexible"], selected: "" },
     { name: "Free/Paid", options: ["Free", "Paid"], selected: "" },
   ]);
 
-  const [newFilterName, setNewFilterName] = useState("");
+  // Fetch categories and universities from API
+  useEffect(() => {
+    const fetchFilterOptions = async () => {
+      try {
+        const [categoriesRes, universitiesRes] = await Promise.all([
+          fetch('http://localhost:5000/api/categories'),
+          fetch('http://localhost:5000/api/universities')
+        ]);
+        
+        const categoriesData = await categoriesRes.json();
+        const universitiesData = await universitiesRes.json();
+        
+        setFiltersState(prevFilters => {
+          const updatedFilters = [...prevFilters];
+          
+          // Update Category options
+          const categoryIndex = updatedFilters.findIndex(f => f.name === "Category");
+          if (categoryIndex !== -1 && categoriesData.categories) {
+            updatedFilters[categoryIndex].options = categoriesData.categories.map(cat => cat.name);
+          }
+          
+          // Update University options
+          const universityIndex = updatedFilters.findIndex(f => f.name === "University");
+          if (universityIndex !== -1 && universitiesData.universities) {
+            updatedFilters[universityIndex].options = universitiesData.universities.map(uni => uni.name);
+          }
+          
+          return updatedFilters;
+        });
+      } catch (error) {
+        console.error('Error fetching filter options:', error);
+      }
+    };
+    
+    fetchFilterOptions();
+  }, []);
 
   // Update main filters state
   useEffect(() => {
@@ -102,7 +126,8 @@ const FiltersPanel = ({ setFilters }) => {
       if (f.selected) {
         // Map filter names to the correct key names used in filtering
         const filterKey = f.name.toLowerCase() === 'free/paid' ? 'free' : 
-                         f.name.toLowerCase() === 'availability' ? 'availability' : 
+                         f.name.toLowerCase() === 'availability' ? 'availability' :
+                         f.name.toLowerCase() === 'university' ? 'university' :
                          f.name.toLowerCase();
         appliedFilters[filterKey] = f.selected;
       }
@@ -116,32 +141,14 @@ const FiltersPanel = ({ setFilters }) => {
     setFiltersState(updated);
   };
 
-  const addNewFilterType = () => {
-    if (newFilterName && !filters.some((f) => f.name.toLowerCase() === newFilterName.toLowerCase())) {
-      setFiltersState([
-        ...filters,
-        { name: newFilterName, options: [], selected: "" },
-      ]);
-      setNewFilterName("");
-    }
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      addNewFilterType();
-      e.preventDefault();
-    }
-  };
-
   return (
     <div
-      className="shadow-2xl rounded-2xl p-8 w-80 border border-[var(--color-border)]"
+      className="w-full flex flex-wrap gap-4 p-4 rounded-2xl shadow-lg border border-[var(--color-border)]"
       style={{
-        color: 'var(--color-surface)',
         background: 'linear-gradient(135deg, #29406b 80%, #3b5998 100%)',
       }}
     >
-      <h2 className="text-2xl font-bold mb-8 tracking-wide" style={{ color: 'var(--color-surface)' }}>Filters</h2>
+      <h2 className="text-2xl font-bold w-full mb-4 tracking-wide" style={{ color: 'var(--color-surface)' }}>Filters</h2>
 
       {/* Existing filters */}
       {filters.map((filter, idx) => (
@@ -151,33 +158,6 @@ const FiltersPanel = ({ setFilters }) => {
           setFilter={(f) => updateFilter(idx, f)}
         />
       ))}
-
-      {/* Add new filter type */}
-      <div className="mt-6">
-        <input
-          type="text"
-          value={newFilterName}
-          onChange={(e) => setNewFilterName(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Add new filter (e.g., Gender)"
-          style={{
-            background: 'var(--color-surface)',
-            color: 'var(--color-primary)',
-            border: '1px solid var(--color-border)',
-          }}
-          className="w-full px-4 py-3 rounded-lg mb-3 focus:outline-none"
-        />
-          <button
-            onClick={addNewFilterType}
-            style={{
-              background: 'var(--color-accent)',
-              color: 'var(--color-surface)',
-            }}
-            className="w-full px-4 py-3 rounded-lg font-bold hover:opacity-80 transition"
-          >
-            Add Filter
-          </button>
-      </div>
     </div>
   );
 };

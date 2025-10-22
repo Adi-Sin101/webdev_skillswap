@@ -7,7 +7,9 @@ const UserSchema = new mongoose.Schema({
   university: String,
   bio: String,
   skills: [String],
-  avatar: String,
+  avatar: String, // Keep for backward compatibility
+  profilePicture: String, // Cloudinary URL
+  cloudinaryPublicId: String, // For deletion purposes
   social: {
     linkedin: String,
     github: String,

@@ -12,9 +12,47 @@ const Signup = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [universities, setUniversities] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [isUniversityOpen, setIsUniversityOpen] = useState(false);
   
   const { register } = useAuth();
   const navigate = useNavigate();
+
+  // Fetch universities on component mount
+  React.useEffect(() => {
+    const fetchUniversities = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/universities');
+        const data = await response.json();
+        if (data.universities) {
+          setUniversities(data.universities);
+        }
+      } catch (error) {
+        console.error('Error fetching universities:', error);
+      }
+    };
+    fetchUniversities();
+  }, []);
+
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('#university-container')) {
+        setShowDropdown(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Filter universities based on search term
+  const filteredUniversities = universities.filter(uni =>
+    uni.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    uni.location.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleChange = (e) => {
     setFormData({
@@ -23,6 +61,20 @@ const Signup = () => {
     });
     // Clear error when user starts typing
     if (error) setError('');
+  };
+
+  const handleUniversitySearch = (e) => {
+    setSearchTerm(e.target.value);
+    setShowDropdown(true);
+  };
+
+  const selectUniversity = (university) => {
+    setFormData({
+      ...formData,
+      university: university.name
+    });
+    setSearchTerm(university.name);
+    setShowDropdown(false);
   };
 
   const handleSubmit = async (e) => {
@@ -114,20 +166,90 @@ const Signup = () => {
             </div>
 
             {/* University Field */}
-            <div>
+            <div id="university-container" className="relative">
               <label htmlFor="university" className="block text-sm font-medium text-[var(--color-primary)] mb-2">
                 University
               </label>
-              <input
-                id="university"
-                name="university"
-                type="text"
-                required
-                value={formData.university}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-[var(--color-border)] rounded-lg focus:ring-2 focus:ring-[var(--color-accent)] focus:border-[var(--color-accent)] bg-white text-[var(--color-primary)] placeholder-[var(--color-muted)] transition-all duration-200"
-                placeholder="Enter your university"
-              />
+              {/* Collapsible University Selector */}
+              <div className="w-full">
+                <div
+                  onClick={() => setIsUniversityOpen(!isUniversityOpen)}
+                  className="cursor-pointer rounded-xl px-4 py-3 flex justify-between items-center transition-all duration-200 hover:shadow-lg border border-[var(--color-border)]"
+                  style={{
+                    background: 'var(--color-surface)',
+                    color: 'var(--color-primary)',
+                    boxShadow: '0 2px 8px 0 rgba(0,0,0,0.04)',
+                  }}
+                >
+                  <span className="font-medium tracking-wide">
+                    {searchTerm || formData.university || 'Select University'}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    {(searchTerm || formData.university) && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSearchTerm('');
+                          setFormData({
+                            ...formData,
+                            university: ''
+                          });
+                        }}
+                        className="text-xs text-red-400 hover:text-red-600 underline"
+                      >
+                        ✕
+                      </button>
+                    )}
+                    <span className="text-gray-400 text-xs">
+                      {isUniversityOpen ? "▲" : "▼"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* University Options (shown when open) */}
+                {isUniversityOpen && (
+                  <div className="mt-2 relative">
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setShowDropdown(true);
+                      }}
+                      onFocus={() => setShowDropdown(true)}
+                      placeholder="Search for your university"
+                      className="w-full px-4 py-3 border border-[var(--color-border)] rounded-lg focus:ring-2 focus:ring-[var(--color-accent)] focus:border-[var(--color-accent)] bg-white text-[var(--color-primary)] placeholder-[var(--color-muted)] transition-all duration-200"
+                      autoComplete="off"
+                    />
+
+                    {/* Dropdown */}
+                    {showDropdown && filteredUniversities.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {filteredUniversities.slice(0, 50).map((uni) => (
+                          <div
+                            key={uni._id}
+                            onClick={() => {
+                              selectUniversity(uni);
+                              setIsUniversityOpen(false);
+                            }}
+                            className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                          >
+                            <div className="font-medium text-[var(--color-primary)]">{uni.name}</div>
+                            <div className="text-sm text-[var(--color-muted)]">{uni.location}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* No results message */}
+                    {showDropdown && searchTerm && filteredUniversities.length === 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg p-4">
+                        <p className="text-sm text-[var(--color-muted)]">No universities found. Try a different search term.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Password Field */}

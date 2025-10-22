@@ -51,7 +51,7 @@ const responseSchema = new mongoose.Schema({
   // Status of the response
   status: {
     type: String,
-    enum: ['pending', 'accepted', 'rejected', 'withdrawn'],
+    enum: ['pending', 'accepted', 'rejected', 'withdrawn', 'completed'],
     default: 'pending'
   },
   
@@ -62,7 +62,22 @@ const responseSchema = new mongoose.Schema({
     required: true
   },
   
-  // Skill swap completion tracking
+  // Application completion tracking
+  isCompleted: {
+    type: Boolean,
+    default: false
+  },
+  
+  completedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  
+  completedAt: {
+    type: Date
+  },
+  
+  // Legacy fields for backward compatibility
   isApplicantCompleted: {
     type: Boolean,
     default: false

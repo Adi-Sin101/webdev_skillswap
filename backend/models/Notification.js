@@ -6,7 +6,7 @@ const NotificationSchema = new mongoose.Schema({
   
   type: { 
     type: String, 
-    enum: ["new_offer", "new_request", "offer_response", "request_response", "session_scheduled", "session_completed", "new_message", "badge_earned"],
+    enum: ["new_offer", "new_request", "offer_response", "request_response", "session_scheduled", "session_completed", "new_message", "badge_earned", "connection_request", "connection_accepted"],
     required: true 
   },
   
@@ -17,6 +17,7 @@ const NotificationSchema = new mongoose.Schema({
   relatedOffer: { type: mongoose.Schema.Types.ObjectId, ref: "Offer" },
   relatedRequest: { type: mongoose.Schema.Types.ObjectId, ref: "Request" },
   relatedConnection: { type: mongoose.Schema.Types.ObjectId, ref: "Connection" },
+  relatedResponse: { type: mongoose.Schema.Types.ObjectId, ref: "Response" },
   
   isRead: { type: Boolean, default: false },
   actionUrl: String, // Where to redirect when clicked

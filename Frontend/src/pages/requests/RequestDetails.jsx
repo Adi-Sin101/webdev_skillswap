@@ -195,7 +195,7 @@ const RequestDetails = () => {
               <div className="flex-1">
                 <div className="flex items-center gap-4 mb-4">
                   <img
-                    src={request.user?.avatar || `https://ui-avatars.com/api/?name=${request.user?.name}&background=0D8ABC&color=fff`}
+                    src={request.user?.profilePicture || request.user?.avatar || `https://ui-avatars.com/api/?name=${request.user?.name}&background=0D8ABC&color=fff`}
                     alt={request.user?.name}
                     className="w-16 h-16 rounded-full border-2 border-white"
                   />

@@ -33,7 +33,8 @@ const NavItems = ({ isMenuOpen, closeMenu, isScrolled }) => {
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
-    const [unreadCount, setUnreadCount] = useState(0);
+    const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+    const [unreadMessageCount, setUnreadMessageCount] = useState(0);
     const { user } = useAuth();
     
     const toggleMenu = () => {
@@ -44,27 +45,37 @@ const Navbar = () => {
         setIsMenuOpen(false);
     };
 
-    // Fetch unread notifications count
+    // Fetch unread notifications and messages count
     useEffect(() => {
-        const fetchUnreadCount = async () => {
+        const fetchUnreadCounts = async () => {
             if (user && user._id) {
                 try {
-                    const response = await fetch(`http://localhost:5000/api/notifications/user/${user._id}/unread`);
-                    const data = await response.json();
-                    if (response.ok) {
-                        setUnreadCount(data.unreadCount || 0);
+                    const [notificationsRes, messagesRes] = await Promise.all([
+                        fetch(`http://localhost:5000/api/notifications/user/${user._id}/unread`),
+                        fetch(`http://localhost:5000/api/messages/unread/${user._id}`)
+                    ]);
+                    
+                    if (notificationsRes.ok) {
+                        const notifData = await notificationsRes.json();
+                        setUnreadNotificationCount(notifData.unreadCount || 0);
+                    }
+                    
+                    if (messagesRes.ok) {
+                        const msgData = await messagesRes.json();
+                        setUnreadMessageCount(msgData.unreadCount || 0);
                     }
                 } catch (error) {
-                    console.error('Error fetching unread count:', error);
-                    setUnreadCount(0);
+                    console.error('Error fetching unread counts:', error);
+                    setUnreadNotificationCount(0);
+                    setUnreadMessageCount(0);
                 }
             }
         };
 
-        fetchUnreadCount();
+        fetchUnreadCounts();
         
-        // Refresh unread count every 30 seconds
-        const interval = setInterval(fetchUnreadCount, 30000);
+        // Refresh unread counts every 30 seconds
+        const interval = setInterval(fetchUnreadCounts, 30000);
         return () => clearInterval(interval);
     }, [user]);
     
@@ -119,7 +130,7 @@ const Navbar = () => {
                             <div className="flex items-center gap-3 bg-white/20 px-4 py-2 rounded-xl">
                                 {/* User Avatar */}
                                 <img 
-                                    src={user.avatar || "https://randomuser.me/api/portraits/men/1.jpg"} 
+                                    src={user.profilePicture || user.avatar || "https://randomuser.me/api/portraits/men/1.jpg"} 
                                     alt={user.name}
                                     className="w-8 h-8 rounded-full border-2 border-white/50"
                                 />
@@ -130,18 +141,37 @@ const Navbar = () => {
                                 </div>
                             </div>
                             
+                            {/* Messages Menu */}
+                            <div className="relative">
+                                <Link
+                                    to="/conversations"
+                                    className="relative text-white font-medium p-2 rounded-xl hover:bg-white/40 hover:text-gray-900 transition-all duration-200 block"
+                                    title="Messages"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                    </svg>
+                                    {unreadMessageCount > 0 && (
+                                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
+                                            {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
+                                        </span>
+                                    )}
+                                </Link>
+                            </div>
+                            
                             {/* Notification Menu */}
                             <div className="relative notification-menu-container">
                                 <Link
                                     to="/notifications"
                                     className="relative text-white font-medium p-2 rounded-xl hover:bg-white/40 hover:text-gray-900 transition-all duration-200 block"
+                                    title="Notifications"
                                 >
                                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-3.405-3.405A2.032 2.032 0 0116 12.414V11a6.01 6.01 0 00-2-4.473 6.003 6.003 0 00-8 0A6.01 6.01 0 004 11v1.414c0 .529-.211 1.036-.595 1.405L0 17h5m10 0v1a3 3 0 11-6 0v-1" />
                                     </svg>
-                                    {unreadCount > 0 && (
+                                    {unreadNotificationCount > 0 && (
                                         <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
-                                            {unreadCount}
+                                            {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
                                         </span>
                                     )}
                                 </Link>
@@ -177,7 +207,7 @@ const Navbar = () => {
                                     {/* Mobile User Profile Section */}
                                     <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl mb-2">
                                         <img 
-                                            src={user.avatar || "https://randomuser.me/api/portraits/men/1.jpg"} 
+                                            src={user.profilePicture || user.avatar || "https://randomuser.me/api/portraits/men/1.jpg"} 
                                             alt={user.name}
                                             className="w-10 h-10 rounded-full border-2 border-gray-300"
                                         />
@@ -187,6 +217,33 @@ const Navbar = () => {
                                             <div className="text-xs text-gray-500">{user.email}</div>
                                         </div>
                                     </div>
+                                    
+                                    {/* Mobile Messages */}
+                                    <Link 
+                                        to="/conversations" 
+                                        onClick={closeMenu}
+                                        className="bg-gray-50 rounded-xl p-3 mb-2 block hover:bg-gray-100 transition-colors"
+                                    >
+                                        <div className="flex items-center justify-between mb-2">
+                                            <h4 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                                </svg>
+                                                Messages
+                                            </h4>
+                                            {unreadMessageCount > 0 && (
+                                                <span className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
+                                                    {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="text-xs text-gray-600">
+                                            {unreadMessageCount > 0 ? `You have ${unreadMessageCount} unread messages` : 'No new messages'}
+                                        </div>
+                                        <div className="text-xs text-blue-600 font-medium mt-2">
+                                            View all messages →
+                                        </div>
+                                    </Link>
                                     
                                     {/* Mobile Notifications */}
                                     <Link 
@@ -201,14 +258,14 @@ const Navbar = () => {
                                                 </svg>
                                                 Notifications
                                             </h4>
-                                            {unreadCount > 0 && (
+                                            {unreadNotificationCount > 0 && (
                                                 <span className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
-                                                    {unreadCount}
+                                                    {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
                                                 </span>
                                             )}
                                         </div>
                                         <div className="text-xs text-gray-600">
-                                            {unreadCount > 0 ? `You have ${unreadCount} unread notifications` : 'No new notifications'}
+                                            {unreadNotificationCount > 0 ? `You have ${unreadNotificationCount} unread notifications` : 'No new notifications'}
                                         </div>
                                         <div className="text-xs text-blue-600 font-medium mt-2">
                                             View all notifications →

@@ -15,6 +15,9 @@ import CompletedActivities from './pages/profile/CompletedActivities.jsx'
 import Notifications from './pages/notifications/Notifications.jsx'
 import OfferDetails from './pages/offers/OfferDetails.jsx'
 import RequestDetails from './pages/requests/RequestDetails.jsx'
+import ApplicationDetails from './pages/applications/ApplicationDetails.jsx'
+import Conversations from './pages/messages/Conversations.jsx'
+import Chat from './pages/messages/Chat.jsx'
 import RouteError from './components/RouteError.jsx'
 import DiscoverProfiles from './pages/discover/DiscoverProfiles.jsx'
 import Login from './pages/auth/Login.jsx'
@@ -66,6 +69,14 @@ const router = createBrowserRouter([
         element: <Notifications />,
       },
       {
+        path: '/conversations',
+        element: <Conversations />,
+      },
+      {
+        path: '/chat/:conversationId',
+        element: <Chat />,
+      },
+      {
         path: '/discover',
         element: <DiscoverProfiles />,
       },
@@ -76,6 +87,10 @@ const router = createBrowserRouter([
       {
         path: '/request-details/:id',
         element: <RequestDetails />,
+      },
+      {
+        path: '/applications/:id',
+        element: <ApplicationDetails />,
       },
     ],
   },

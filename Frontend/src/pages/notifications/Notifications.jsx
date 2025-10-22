@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const Notifications = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // 'all', 'unread', 'read'
@@ -266,6 +268,20 @@ const Notifications = () => {
     }
   };
 
+  // Handle viewing connection notification details (navigate to sender's profile)
+  const handleViewConnectionDetails = (notification) => {
+    // Mark as read
+    if (!notification.isRead) {
+      markAsRead(notification._id);
+    }
+    
+    // Extract sender ID and navigate to their profile
+    const senderId = notification.sender?._id || notification.sender;
+    if (senderId) {
+      navigate(`/profile/${senderId}`);
+    }
+  };
+
   const getIcon = (type) => {
     switch (type) {
       case 'new_offer':
@@ -487,7 +503,7 @@ const Notifications = () => {
                         {(notification.sender || notification.relatedUser) && (
                           <div className="flex items-center gap-2 mb-2">
                             <img
-                              src={(notification.sender?.avatar || notification.relatedUser?.avatar) || 'https://randomuser.me/api/portraits/lego/1.jpg'}
+                              src={(notification.sender?.profilePicture || notification.sender?.avatar || notification.relatedUser?.profilePicture || notification.relatedUser?.avatar) || 'https://randomuser.me/api/portraits/lego/1.jpg'}
                               alt={(notification.sender?.name || notification.relatedUser?.name) || 'User'}
                               className="w-6 h-6 rounded-full"
                             />
@@ -549,7 +565,23 @@ const Notifications = () => {
                           >
                             {actionLoading[notification._id] ? 'Loading...' : 'Ignore'}
                           </button>
+                          <button
+                            onClick={() => handleViewConnectionDetails(notification)}
+                            className="px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition"
+                          >
+                            View Profile
+                          </button>
                         </div>
+                      ) : (notification.type === 'connection_request' || notification.type === 'connection_accepted') ? (
+                        <button
+                          onClick={() => handleViewConnectionDetails(notification)}
+                          className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-accent)] hover:text-blue-800"
+                        >
+                          View Profile
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
                       ) : notification.actionUrl ? (
                         <a
                           href={notification.actionUrl}

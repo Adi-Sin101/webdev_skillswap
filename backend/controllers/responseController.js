@@ -106,7 +106,8 @@ export const applyToOffer = async (req, res) => {
         title: 'New Application Received',
         message: `${response.applicant.name} applied to your offer: "${offer.title}"`,
         relatedOffer: offerID,
-        actionUrl: `/offers/${offerID}`
+        relatedResponse: response._id,
+        actionUrl: `/applications/${response._id}`
       });
       debugLog('✅ Notification created');
     } catch (notifError) {
@@ -200,7 +201,8 @@ export const applyToRequest = async (req, res) => {
         title: 'Someone Wants to Help!',
         message: `${response.applicant.name} offered to help with your request: "${request.title}"`,
         relatedRequest: requestID,
-        actionUrl: `/requests/${requestID}`
+        relatedResponse: response._id,
+        actionUrl: `/applications/${response._id}`
       });
     } catch (notifError) {
       console.error('Error creating notification:', notifError);
@@ -634,5 +636,169 @@ export const undoSwapComplete = async (req, res) => {
   } catch (error) {
     console.error('Error undoing swap complete:', error);
     res.status(500).json({ error: 'Failed to undo completion' });
+  }
+};
+
+// Complete an application/trade
+export const completeApplication = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId } = req.body;
+
+    const response = await Response.findById(id)
+      .populate('offerID', 'user title')
+      .populate('requestID', 'user title')
+      .populate('applicant', 'name email');
+
+    if (!response) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+
+    if (response.status !== 'accepted') {
+      return res.status(400).json({ error: 'Application must be accepted before it can be completed' });
+    }
+
+    if (response.isCompleted) {
+      return res.status(400).json({ error: 'Application is already completed' });
+    }
+
+    // Determine who can complete based on response type
+    let canComplete = false;
+    let shouldCompleteOriginalPost = false;
+
+    if (response.responseType === 'offer') {
+      // For offers: Only the applicant can complete
+      canComplete = response.applicant._id.toString() === userId;
+      shouldCompleteOriginalPost = false; // Offers remain available after completion
+    } else if (response.responseType === 'request') {
+      // For requests: Only the request owner can complete
+      canComplete = response.requestID?.user.toString() === userId;
+      shouldCompleteOriginalPost = true; // Requests are completed after help is received
+    }
+
+    if (!canComplete) {
+      const errorMsg = response.responseType === 'offer' 
+        ? 'Only the applicant can complete this application'
+        : 'Only the request owner can complete this application';
+      return res.status(403).json({ error: errorMsg });
+    }
+
+    // Mark application as completed
+    response.isCompleted = true;
+    response.completedBy = userId;
+    response.completedAt = new Date();
+    response.status = 'completed';
+    await response.save();
+
+    // Complete the original request if needed
+    if (shouldCompleteOriginalPost && response.requestID) {
+      await Request.findByIdAndUpdate(response.requestID._id, { 
+        status: 'completed' 
+      });
+    }
+
+    // Create completion notifications
+    try {
+      const title = response.offerID?.title || response.requestID?.title;
+      
+      if (response.responseType === 'offer') {
+        // Notify offer owner that applicant completed the task
+        await Notification.create({
+          recipient: response.offerID.user,
+          sender: userId,
+          type: 'session_completed',
+          title: 'Application Completed',
+          message: `${response.applicant.name} has completed the application for "${title}"`,
+          relatedOffer: response.offerID._id,
+          relatedResponse: response._id,
+          actionUrl: `/applications/${response._id}`
+        });
+      } else if (response.responseType === 'request') {
+        // Notify helper that request owner marked request as completed
+        await Notification.create({
+          recipient: response.applicant._id,
+          sender: userId,
+          type: 'session_completed',
+          title: 'Request Completed',
+          message: `The request "${title}" has been marked as completed. Thank you for your help!`,
+          relatedRequest: response.requestID._id,
+          relatedResponse: response._id,
+          actionUrl: `/applications/${response._id}`
+        });
+      }
+    } catch (notifError) {
+      console.error('Error creating completion notification:', notifError);
+      // Continue even if notification fails
+    }
+
+    res.json({ 
+      message: 'Application completed successfully',
+      response,
+      originalPostCompleted: shouldCompleteOriginalPost
+    });
+  } catch (error) {
+    console.error('Error completing application:', error);
+    res.status(500).json({ error: 'Failed to complete application' });
+  }
+};
+
+// Get a specific application by ID
+export const getApplicationById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const response = await Response.findById(id)
+      .populate('applicant', 'name email profilePicture')
+      .populate('offerID', 'title description user category')
+      .populate('requestID', 'title description user category')
+      .populate({
+        path: 'offerID',
+        populate: { path: 'user', select: 'name email profilePicture' }
+      })
+      .populate({
+        path: 'requestID', 
+        populate: { path: 'user', select: 'name email profilePicture' }
+      })
+      .populate('completedBy', 'name email');
+
+    if (!response) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+
+    res.json({ response });
+  } catch (error) {
+    console.error('Error fetching application:', error);
+    res.status(500).json({ error: 'Failed to fetch application' });
+  }
+};
+
+// Get all responses sent by a user (applications they sent)
+export const getUserSentResponses = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { status } = req.query;
+
+    const query = { applicant: userId };
+    if (status) {
+      query.status = status;
+    }
+
+    const responses = await Response.find(query)
+      .populate('offerID', 'title user category university')
+      .populate('requestID', 'title user category university')
+      .populate({
+        path: 'offerID',
+        populate: { path: 'user', select: 'name email profilePicture' }
+      })
+      .populate({
+        path: 'requestID',
+        populate: { path: 'user', select: 'name email profilePicture' }
+      })
+      .sort({ createdAt: -1 });
+
+    res.json({ responses, count: responses.length });
+  } catch (error) {
+    console.error('Error fetching user sent responses:', error);
+    res.status(500).json({ error: 'Failed to fetch sent responses' });
   }
 };

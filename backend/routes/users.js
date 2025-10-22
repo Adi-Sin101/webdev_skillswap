@@ -5,7 +5,10 @@ import {
   createUser, 
   updateUser, 
   deleteUser, 
-  getUserByEmail 
+  getUserByEmail,
+  uploadProfilePicture,
+  deleteProfilePicture,
+  upload
 } from "../controllers/userController.js";
 import { validateUserCreation, validateObjectId } from "../middleware/validation.js";
 import { asyncHandler } from "../middleware/errorHandler.js";
@@ -26,6 +29,12 @@ router.post("/", validateUserCreation, asyncHandler(createUser));
 
 // PUT /api/users/:id - update user
 router.put("/:id", validateObjectId, asyncHandler(updateUser));
+
+// POST /api/users/:id/profile-picture - upload profile picture
+router.post("/:id/profile-picture", validateObjectId, upload.single('profilePicture'), asyncHandler(uploadProfilePicture));
+
+// DELETE /api/users/:id/profile-picture - delete profile picture
+router.delete("/:id/profile-picture", validateObjectId, asyncHandler(deleteProfilePicture));
 
 // DELETE /api/users/:id - delete user
 router.delete("/:id", validateObjectId, asyncHandler(deleteUser));

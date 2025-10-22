@@ -65,3 +65,41 @@
 [2025-10-21T00:02:47.622Z] ✅ Response saved successfully
 [2025-10-21T00:02:47.633Z] ✅ Notification created
 [2025-10-21T00:02:47.635Z] ✅ Application completed successfully
+[2025-10-22T14:59:04.423Z] === APPLY TO OFFER DEBUG ===
+[2025-10-22T14:59:04.426Z] Offer ID: 68f7ae095f2de02804de5aec
+[2025-10-22T14:59:04.428Z] Full request body: {
+  "applicant": "68f5bfcfc775d63cf7a46e0e",
+  "message": "sdf",
+  "availability": "adsf",
+  "proposedTimeline": "sdf",
+  "contactInfo": {
+    "email": "shahidaparvin@gmail.com",
+    "phone": "",
+    "preferredContact": "email"
+  }
+}
+[2025-10-22T14:59:04.430Z] Extracted data: applicant=68f5bfcfc775d63cf7a46e0e, message=sdf, availability=adsf
+[2025-10-22T14:59:04.433Z] ✅ All validations passed
+[2025-10-22T14:59:04.441Z] ✅ Offer found: sazx
+[2025-10-22T14:59:04.447Z] ✅ User has not applied before
+[2025-10-22T14:59:04.451Z] Attempting to save response...
+[2025-10-22T14:59:04.484Z] ✅ Response saved successfully
+[2025-10-22T14:59:04.552Z] ✅ Notification created
+[2025-10-22T14:59:04.554Z] ✅ Application completed successfully
+[2025-10-22T16:15:47.753Z] === APPLY TO OFFER DEBUG ===
+[2025-10-22T16:15:47.757Z] Offer ID: 68f6cd8f68a79acecbc2900b
+[2025-10-22T16:15:47.758Z] Full request body: {
+  "applicant": "68ed7b59b3b42ea7dbc10f7c",
+  "message": "kdd",
+  "availability": "aaa",
+  "proposedTimeline": "bbb",
+  "contactInfo": {
+    "email": "adiba0tahsin@gmail.com",
+    "phone": "",
+    "preferredContact": "email"
+  }
+}
+[2025-10-22T16:15:47.759Z] Extracted data: applicant=68ed7b59b3b42ea7dbc10f7c, message=kdd, availability=aaa
+[2025-10-22T16:15:47.760Z] ✅ All validations passed
+[2025-10-22T16:15:47.768Z] ✅ Offer found:  n,.k
+[2025-10-22T16:15:47.774Z] ❌ User already applied

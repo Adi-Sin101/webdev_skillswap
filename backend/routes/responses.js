@@ -9,7 +9,10 @@ import {
   updateResponseStatus,
   markEmailExchanged,
   markSwapComplete,
-  getUserAcceptedResponses
+  getUserAcceptedResponses,
+  getUserSentResponses,
+  completeApplication,
+  getApplicationById
 } from '../controllers/responseController.js';
 import { validateObjectId } from '../middleware/validation.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
@@ -52,5 +55,14 @@ router.put('/:id/undo-complete', validateObjectId, asyncHandler(async (req, res)
 
 // Get user's accepted responses (for dashboard)
 router.get('/user/:userId/accepted', validateObjectId, asyncHandler(getUserAcceptedResponses));
+
+// Get all responses sent by a user (applications they sent)
+router.get('/user/:userId/sent', validateObjectId, asyncHandler(getUserSentResponses));
+
+// Complete an application
+router.put('/:id/complete-application', validateObjectId, asyncHandler(completeApplication));
+
+// Get a specific application by ID
+router.get('/:id', validateObjectId, asyncHandler(getApplicationById));
 
 export default router;

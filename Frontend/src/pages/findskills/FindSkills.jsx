@@ -44,10 +44,12 @@ const skillsData = [
 const FindSkills = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchSkill, setSearchSkill] = useState("");
+  const [searchUniversity, setSearchUniversity] = useState("");
   const [filters, setFilters] = useState({
     type: "",
     category: "",
-    location: "",
+    university: "",
     availability: "",
     free: "",
   });
@@ -117,13 +119,25 @@ const FindSkills = () => {
   }, []);
 
   const filteredPosts = posts.filter((post) => {
-    return (
+    // Search filter
+    const matchesSkillSearch = !searchSkill || 
+      post.title.toLowerCase().includes(searchSkill.toLowerCase()) ||
+      post.details?.toLowerCase().includes(searchSkill.toLowerCase()) ||
+      post.category?.toLowerCase().includes(searchSkill.toLowerCase());
+
+    const matchesUniversitySearch = !searchUniversity ||
+      post.university?.toLowerCase().includes(searchUniversity.toLowerCase());
+
+    // Filters
+    const matchesFilters = (
       (!filters.type || post.type === filters.type) &&
       (!filters.category || post.category === filters.category) &&
-      (!filters.location || post.university === filters.location) &&
+      (!filters.university || post.university === filters.university) &&
       (!filters.availability || post.availability === filters.availability) &&
       (!filters.free || (filters.free === "Free" ? post.free : !post.free))
     );
+
+    return matchesSkillSearch && matchesUniversitySearch && matchesFilters;
   });
 
   if (loading) {
@@ -138,20 +152,22 @@ const FindSkills = () => {
   <div className="min-h-screen bg-gradient-to-br from-[var(--color-background)] to-[var(--color-accent)]/10 p-6 pl-4">
       {/* Top Search Bar with extra margin for separation from navbar */}
       <div className="mt-8">
-        <SearchBar />
+        <SearchBar 
+          searchSkill={searchSkill}
+          setSearchSkill={setSearchSkill}
+          searchUniversity={searchUniversity}
+          setSearchUniversity={setSearchUniversity}
+        />
       </div>
 
-      {/* 2-column grid layout without sidebar */}
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Left: Filters */}
-        <div className="md:col-span-1">
-          <FiltersPanel setFilters={setFilters} />
-        </div>
+      {/* Filters horizontally */}
+      <div className="mt-6">
+        <FiltersPanel setFilters={setFilters} />
+      </div>
 
-        {/* Center: Listings */}
-        <div className="md:col-span-2">
-          <ListingsFeed posts={filteredPosts} />
-        </div>
+      {/* Listings below */}
+      <div className="mt-6">
+        <ListingsFeed posts={filteredPosts} />
       </div>
     </div>
   );

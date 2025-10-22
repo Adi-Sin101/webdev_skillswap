@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
 import PostOfferModal from '../../components/PostOfferModal';
 import PostRequestModal from '../../components/PostRequestModal';
+import ProfilePictureUpload from '../../components/ProfilePictureUpload';
 import { useAuth } from '../../contexts/AuthContext';
 
 const dummyUser = {
@@ -85,10 +86,45 @@ const Profile = () => {
       email: ""
     }
   });
+  const [universities, setUniversities] = useState([]);
+  const [searchUniversity, setSearchUniversity] = useState("");
+  const [showUniversityDropdown, setShowUniversityDropdown] = useState(false);
+  const [isUniversityOpen, setIsUniversityOpen] = useState(false);
   
   // Get logged-in user ID from auth context
   const loggedInUserId = authUser?._id;
   const isOwner = !id || id === loggedInUserId;
+
+  // Fetch universities on component mount
+  React.useEffect(() => {
+    const fetchUniversities = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/universities');
+        const data = await response.json();
+        if (data.universities) {
+          setUniversities(data.universities);
+        }
+      } catch (error) {
+        console.error('Error fetching universities:', error);
+      }
+    };
+    fetchUniversities();
+  }, []);
+
+  // Filter universities based on search
+  const filteredUniversities = universities.filter(uni =>
+    uni.name.toLowerCase().includes(searchUniversity.toLowerCase()) ||
+    uni.location.toLowerCase().includes(searchUniversity.toLowerCase())
+  );
+
+  const selectUniversity = (university) => {
+    setProfileForm(prev => ({
+      ...prev,
+      university: university.name
+    }));
+    setSearchUniversity(university.name);
+    setShowUniversityDropdown(false);
+  };
 
   // Debug logging
   useEffect(() => {
@@ -874,9 +910,10 @@ const Profile = () => {
         <div className="w-full bg-yellow-100 text-yellow-800 text-center py-2 font-semibold">You are viewing another user's profile</div>
       )}
       <div className="w-full bg-white shadow-lg px-6 md:px-12 py-8 flex flex-col md:flex-row gap-8 items-center mt-8 relative">
-        <div className="w-28 h-28 rounded-full border-4 border-[var(--color-accent)] overflow-hidden">
-          <img src={user?.avatar || "https://randomuser.me/api/portraits/men/1.jpg"} alt="Profile" className="w-full h-full object-cover" />
-        </div>
+        <ProfilePictureUpload 
+          user={user} 
+          onProfilePictureUpdate={(updatedUser) => setUser(updatedUser)}
+        />
         <div className="flex-1 text-center md:text-left">
           <h2 className="text-3xl font-bold text-[var(--color-primary)] mb-1">{user?.name || "Loading..."}</h2>
           <p className="text-gray-600 font-semibold mb-2">{user?.university || ""}</p>
@@ -1350,15 +1387,78 @@ const Profile = () => {
                 />
               </div>
               
-              <div>
+              <div className="relative">
                 <label className="block text-sm font-medium text-gray-700 mb-1">University</label>
-                <input
-                  type="text"
-                  name="university"
-                  value={profileForm.university}
-                  onChange={handleProfileFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                {/* Collapsible University Selector */}
+                <div className="w-full">
+                  <div
+                    onClick={() => setIsUniversityOpen(!isUniversityOpen)}
+                    className="cursor-pointer rounded-xl px-4 py-3 flex justify-between items-center transition-all duration-200 hover:shadow-lg border border-gray-300"
+                    style={{
+                      background: 'var(--color-surface)',
+                      color: 'var(--color-primary)',
+                      boxShadow: '0 2px 8px 0 rgba(0,0,0,0.04)',
+                    }}
+                  >
+                    <span className="font-medium tracking-wide">
+                      {searchUniversity || profileForm.university || 'Select University'}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {(searchUniversity || profileForm.university) && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSearchUniversity('');
+                            setProfileForm(prev => ({ ...prev, university: '' }));
+                          }}
+                          className="text-xs text-red-400 hover:text-red-600 underline"
+                        >
+                          ✕
+                        </button>
+                      )}
+                      <span className="text-gray-400 text-xs">
+                        {isUniversityOpen ? "▲" : "▼"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* University Options (shown when open) */}
+                  {isUniversityOpen && (
+                    <div className="mt-2 relative">
+                      <input
+                        type="text"
+                        value={searchUniversity}
+                        onChange={(e) => {
+                          setSearchUniversity(e.target.value);
+                          setShowUniversityDropdown(true);
+                        }}
+                        onFocus={() => setShowUniversityDropdown(true)}
+                        placeholder="Search your university"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        autoComplete="off"
+                      />
+
+                      {/* Dropdown */}
+                      {showUniversityDropdown && filteredUniversities.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                          {filteredUniversities.slice(0, 30).map((uni) => (
+                            <div
+                              key={uni._id}
+                              onClick={() => {
+                                selectUniversity(uni);
+                                setIsUniversityOpen(false);
+                              }}
+                              className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                            >
+                              <div className="font-medium text-gray-900">{uni.name}</div>
+                              <div className="text-sm text-gray-600">{uni.location}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
               
               <div>

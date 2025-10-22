@@ -1,6 +1,6 @@
 import React from "react";
 
-const SearchBar = ({ searchSkill, setSearchSkill, searchLocation, setSearchLocation }) => {
+const SearchBar = ({ searchSkill, setSearchSkill, searchUniversity, setSearchUniversity }) => {
   return (
     <div
       className="flex flex-col md:flex-row gap-4 mb-6 shadow-2xl rounded-2xl p-6 border border-[var(--color-border)]"
@@ -23,9 +23,9 @@ const SearchBar = ({ searchSkill, setSearchSkill, searchLocation, setSearchLocat
       />
       <input
         type="text"
-        placeholder="University / Location"
-        value={searchLocation}
-        onChange={(e) => setSearchLocation(e.target.value)}
+        placeholder="University"
+        value={searchUniversity}
+        onChange={(e) => setSearchUniversity(e.target.value)}
         style={{
           background: 'var(--color-surface)',
           color: 'var(--color-primary)',

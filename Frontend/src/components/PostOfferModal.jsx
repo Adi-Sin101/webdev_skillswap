@@ -6,8 +6,57 @@ const PostOfferModal = ({ open, onClose, onSubmit, form, onChange, categories, a
   const [currentStep, setCurrentStep] = React.useState(1);
   const [learningOutcome, setLearningOutcome] = React.useState("");
   const [tag, setTag] = React.useState("");
+  const [universities, setUniversities] = React.useState([]);
+  const [searchUniversity, setSearchUniversity] = React.useState("");
+  const [showUniversityDropdown, setShowUniversityDropdown] = React.useState(false);
+  const [dbCategories, setDbCategories] = React.useState([]);
+  const [isCategoryOpen, setIsCategoryOpen] = React.useState(false);
+  const [isUniversityOpen, setIsUniversityOpen] = React.useState(false);
   
   React.useEffect(() => { setLocalCategories(categories); }, [categories]);
+  
+  // Fetch universities and categories
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch universities
+        const uniResponse = await fetch('http://localhost:5000/api/universities');
+        const uniData = await uniResponse.json();
+        if (uniData.universities) {
+          setUniversities(uniData.universities);
+        }
+
+        // Fetch categories
+        const catResponse = await fetch('http://localhost:5000/api/categories');
+        const catData = await catResponse.json();
+        if (catData.categories) {
+          setDbCategories(catData.categories);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+    if (open) {
+      fetchData();
+    }
+  }, [open]);
+
+  // Filter universities based on search
+  const filteredUniversities = universities.filter(uni =>
+    uni.name.toLowerCase().includes(searchUniversity.toLowerCase()) ||
+    uni.location.toLowerCase().includes(searchUniversity.toLowerCase())
+  );
+  
+  const selectUniversity = (university) => {
+    onChange({
+      target: {
+        name: 'location',
+        value: university.name
+      }
+    });
+    setSearchUniversity(university.name);
+    setShowUniversityDropdown(false);
+  };
   
   const addLearningOutcome = () => {
     if (learningOutcome.trim()) {
@@ -92,29 +141,61 @@ const PostOfferModal = ({ open, onClose, onSubmit, form, onChange, categories, a
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                  <div className="flex gap-2">
-                    <select name="category" value={form.category || ''} onChange={onChange} required className="px-4 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 focus:outline-none flex-1">
-                      <option value="">Select Category</option>
-                      {localCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                    </select>
-                    <input
-                      type="text"
-                      value={newCategory}
-                      onChange={e => setNewCategory(e.target.value)}
-                      placeholder="Add new"
-                      className="px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 focus:outline-none w-24"
-                    />
-                    <button
-                      type="button"
-                      className="px-3 py-2 rounded-lg bg-[var(--color-accent)] text-white font-bold shadow hover:opacity-90 transition text-sm"
-                      onClick={() => {
-                        if (newCategory.trim() && !localCategories.includes(newCategory.trim())) {
-                          setLocalCategories([...localCategories, newCategory.trim()]);
-                          setNewCategory("");
-                        }
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                  {/* Collapsible Category Selector */}
+                  <div className="w-full">
+                    <div
+                      onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                      className="cursor-pointer rounded-xl px-4 py-3 flex justify-between items-center transition-all duration-200 hover:shadow-lg border border-gray-300"
+                      style={{
+                        background: 'var(--color-surface)',
+                        color: 'var(--color-primary)',
+                        boxShadow: '0 2px 8px 0 rgba(0,0,0,0.04)',
                       }}
-                    >+</button>
+                    >
+                      <span className="font-medium tracking-wide">
+                        {form.category || 'Select Category'}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {form.category && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onChange({ target: { name: 'category', value: '' } });
+                            }}
+                            className="text-xs text-red-400 hover:text-red-600 underline"
+                          >
+                            ✕
+                          </button>
+                        )}
+                        <span className="text-gray-400 text-xs">
+                          {isCategoryOpen ? "▲" : "▼"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Radio Button Options (shown when open) */}
+                    {isCategoryOpen && (
+                      <div className="mt-2 space-y-2 max-h-48 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-gray-50">
+                        {dbCategories.map(cat => (
+                          <label key={cat._id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded">
+                            <input
+                              type="radio"
+                              name="category"
+                              value={cat.name}
+                              checked={form.category === cat.name}
+                              onChange={(e) => {
+                                onChange(e);
+                                setIsCategoryOpen(false);
+                              }}
+                              required
+                              className="text-blue-600 focus:ring-blue-600"
+                            />
+                            <span className="text-gray-900 font-medium">{cat.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
                 
@@ -143,7 +224,79 @@ const PostOfferModal = ({ open, onClose, onSubmit, form, onChange, categories, a
                 </div>
               </div>
 
-              <input type="text" name="location" value={form.location || ''} onChange={onChange} required placeholder="Location (University/City)" className="px-4 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 focus:outline-none w-full" />
+              <div id="university-container-offer" className="relative">
+                <label className="block text-sm font-medium text-gray-700 mb-1">University</label>
+                {/* Collapsible University Selector */}
+                <div className="w-full">
+                  <div
+                    onClick={() => setIsUniversityOpen(!isUniversityOpen)}
+                    className="cursor-pointer rounded-xl px-4 py-3 flex justify-between items-center transition-all duration-200 hover:shadow-lg border border-gray-300"
+                    style={{
+                      background: 'var(--color-surface)',
+                      color: 'var(--color-primary)',
+                      boxShadow: '0 2px 8px 0 rgba(0,0,0,0.04)',
+                    }}
+                  >
+                    <span className="font-medium tracking-wide">
+                      {searchUniversity || form.location || 'Select University'}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {(searchUniversity || form.location) && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSearchUniversity('');
+                            onChange({ target: { name: 'location', value: '' } });
+                          }}
+                          className="text-xs text-red-400 hover:text-red-600 underline"
+                        >
+                          ✕
+                        </button>
+                      )}
+                      <span className="text-gray-400 text-xs">
+                        {isUniversityOpen ? "▲" : "▼"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* University Options (shown when open) */}
+                  {isUniversityOpen && (
+                    <div className="mt-2 relative">
+                      <input
+                        type="text"
+                        value={searchUniversity}
+                        onChange={(e) => {
+                          setSearchUniversity(e.target.value);
+                          setShowUniversityDropdown(true);
+                        }}
+                        onFocus={() => setShowUniversityDropdown(true)}
+                        placeholder="Search your university"
+                        className="w-full px-4 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 focus:outline-none"
+                        autoComplete="off"
+                      />
+
+                      {/* Dropdown */}
+                      {showUniversityDropdown && filteredUniversities.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                          {filteredUniversities.slice(0, 30).map((uni) => (
+                            <div
+                              key={uni._id}
+                              onClick={() => {
+                                selectUniversity(uni);
+                                setIsUniversityOpen(false);
+                              }}
+                              className="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                            >
+                              <div className="font-medium text-gray-900">{uni.name}</div>
+                              <div className="text-sm text-gray-600">{uni.location}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Type & Pricing</label>

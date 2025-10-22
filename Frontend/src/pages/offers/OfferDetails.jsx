@@ -198,7 +198,7 @@ const OfferDetails = () => {
               <div className="flex-1">
                 <div className="flex items-center gap-4 mb-4">
                   <img
-                    src={offer.user?.avatar || `https://ui-avatars.com/api/?name=${offer.user?.name}&background=0D8ABC&color=fff`}
+                    src={offer.user?.profilePicture || offer.user?.avatar || `https://ui-avatars.com/api/?name=${offer.user?.name}&background=0D8ABC&color=fff`}
                     alt={offer.user?.name}
                     className="w-16 h-16 rounded-full border-2 border-white"
                   />
