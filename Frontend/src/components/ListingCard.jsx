@@ -57,11 +57,11 @@ const ListingCard = ({ post }) => {
   const canApply = user?._id && user._id !== post.posterId;
 
   return (
-  <div className="bg-white rounded-xl shadow-2xl flex flex-row overflow-hidden p-4 w-full mb-4 border border-[var(--color-border)]" style={{ boxShadow: '0 4px 24px 0 rgba(60,80,120,0.10)' }}>
+  <div className="bg-white rounded-xl shadow-2xl flex flex-col md:flex-row overflow-hidden p-4 w-full mb-4 border border-[var(--color-border)]" style={{ boxShadow: '0 4px 24px 0 rgba(60,80,120,0.10)' }}>
       {/* Profile Left */}
-  <div className="w-1/4 min-w-[100px] bg-[#29406b] p-4 flex flex-col items-center justify-center rounded-lg mr-4" style={{ background: 'linear-gradient(135deg, #29406b 80%, #3b5998 100%)' }}>
+  <div className="w-1/4 min-w-[100px] bg-[#29406b] p-4 flex flex-col items-center justify-start rounded-lg mr-4 md:mr-6" style={{ background: 'linear-gradient(135deg, #29406b 80%, #3b5998 100%)' }}>
         <div className="w-14 h-14 rounded-full border-2 border-[var(--color-accent)] overflow-hidden mb-2">
-          <img src={`https://ui-avatars.com/api/?name=${post.poster}&background=0D8ABC&color=fff`} alt="Profile" className="w-full h-full object-cover" />
+          <img src={post.posterImage || `https://ui-avatars.com/api/?name=${post.poster}&background=0D8ABC&color=fff`} alt="Profile" className="w-full h-full object-cover" />
         </div>
   <h2 className="text-base font-bold text-white mb-1">{post.poster}</h2>
   <p className="text-white text-center mb-1 text-xs">{post.university}</p>

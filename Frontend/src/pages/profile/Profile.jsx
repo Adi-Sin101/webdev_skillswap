@@ -91,6 +91,36 @@ const Profile = () => {
   const [showUniversityDropdown, setShowUniversityDropdown] = useState(false);
   const [isUniversityOpen, setIsUniversityOpen] = useState(false);
   
+  // Function to start conversation with admin
+  const handleMessageAdmin = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/messages/conversation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          participants: [loggedInUserId, user._id]
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        navigate(`/messages/${data.conversation._id}`);
+      } else {
+        console.error('Failed to create conversation');
+        // Fallback: navigate to messages page
+        navigate('/messages');
+      }
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      // Fallback: navigate to messages page
+      navigate('/messages');
+    }
+  };
+
   // Get logged-in user ID from auth context
   const loggedInUserId = authUser?._id;
   const isOwner = !id || id === loggedInUserId;
@@ -1025,6 +1055,19 @@ const Profile = () => {
                 {getConnectionButtonText()}
               </button>
               
+              {/* Message button for admin profile */}
+              {user?.role === 'admin' && !isOwner && (
+                <button
+                  onClick={handleMessageAdmin}
+                  className="bg-blue-500 text-white font-bold px-6 py-2 rounded-lg shadow hover:bg-blue-600 transition flex items-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.955 8.955 0 01-4.126-.98L3 20l1.98-5.874A8.955 8.955 0 013 12c0-4.418 3.582-8 8-8s8 3.582 8 8z" />
+                  </svg>
+                  Message Admin
+                </button>
+              )}
+
               {/* Connection pending message for requesters */}
               {connectionStatus === 'pending' && connectionData?.requester._id === loggedInUserId && (
                 <p className="text-sm text-gray-500 text-center">
@@ -1055,20 +1098,6 @@ const Profile = () => {
           <span className="font-bold text-lg">{connectionsCount}</span>
           <span className="text-xs text-gray-500">Connections</span>
         </div>
-        <div className="flex flex-col items-center">
-          <span className="text-teal-500 text-2xl">✅</span>
-          <span className="font-bold text-lg">{offers.length}</span>
-          <span className="text-xs text-gray-500">Offers</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <span className="text-indigo-500 text-2xl">🏅</span>
-          <div className="flex gap-1 flex-wrap">
-            {(user?.badges || ["New User"]).map(badge => (
-              <span key={badge} className="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded text-xs font-semibold shadow">{badge}</span>
-            ))}
-          </div>
-          <span className="text-xs text-gray-500">Badges</span>
-        </div>
         {typeof isOwner !== 'undefined' && isOwner && (
           <div className="flex gap-4 ml-auto">
             <button className="bg-[var(--color-accent)] text-[var(--color-surface)] font-bold px-6 py-2 rounded-lg shadow hover:opacity-90 transition" onClick={() => setOfferModalOpen(true)}>Post Offer</button>
@@ -1089,11 +1118,11 @@ const Profile = () => {
                 </h3>
                 <p className="text-green-100 text-sm">Your successful skill exchanges</p>
               </div>
-              <Link 
-                to="/completed-activities" 
+              <Link
+                to="/completed-activities"
                 className="text-green-100 text-sm font-medium hover:text-white flex items-center gap-1 bg-green-600 px-3 py-1 rounded-lg hover:bg-green-700 transition-colors"
               >
-                View All 
+                View All
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -1128,7 +1157,7 @@ const Profile = () => {
                     ✅ Completed
                   </span>
                 </div>
-                
+
                 {/* Key details in organized rows */}
                 <div className="grid grid-cols-2 gap-3 text-sm mb-3">
                   <div className="flex items-center gap-2">
@@ -1152,7 +1181,7 @@ const Profile = () => {
                     </span>
                   </div>
                 </div>
-                
+
                 {/* Footer with stats and date */}
                 <div className="flex justify-between items-center pt-3 border-t border-gray-100">
                   <span className="text-xs text-gray-500">
@@ -1164,7 +1193,7 @@ const Profile = () => {
                 </div>
               </div>
             ))}
-            
+
             {/* Show message if no completed activities */}
             {[...offers.filter(offer => offer.status === 'completed'), ...requests.filter(request => request.status === 'completed')].length === 0 && (
               <div className="text-center py-8">
@@ -1190,11 +1219,11 @@ const Profile = () => {
                 </h3>
                 <p className="text-blue-100 text-sm">Skills you're offering to share</p>
               </div>
-              <Link 
-                to="/my-offers" 
+              <Link
+                to="/my-offers"
                 className="text-blue-100 text-sm font-medium hover:text-white flex items-center gap-1 bg-blue-600 px-3 py-1 rounded-lg hover:bg-blue-700 transition-colors"
               >
-                View All 
+                View All
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -1209,7 +1238,7 @@ const Profile = () => {
               .map(offer => {
               // Use actual response count from database
               const responses = offer.responseCount || 0;
-              
+
               return (
                 <div key={offer.id} className="bg-white rounded-lg px-6 py-4 shadow border-l-4 border-blue-400 hover:shadow-md transition-shadow">
                   {/* Header with title and status */}
@@ -1219,14 +1248,14 @@ const Profile = () => {
                       <p className="text-sm text-gray-600 mb-2 line-clamp-2">{offer.description}</p>
                     </div>
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      offer.status === 'completed' 
-                        ? 'bg-green-100 text-green-800' 
+                      offer.status === 'completed'
+                        ? 'bg-green-100 text-green-800'
                         : 'bg-yellow-100 text-yellow-800'
                     }`}>
                       {offer.status === 'completed' ? '✅ Completed' : '⏳ Pending'}
                     </span>
                   </div>
-                  
+
                   {/* Key details in organized rows */}
                   <div className="grid grid-cols-2 gap-3 text-sm mb-3">
                     <div className="flex items-center gap-2">
@@ -1250,7 +1279,7 @@ const Profile = () => {
                       </span>
                     </div>
                   </div>
-                  
+
                   {/* Footer with stats and date */}
                   <div className="flex justify-between items-center pt-3 border-t border-gray-100">
                     <span className="text-xs text-gray-500">{responses} responses</span>
@@ -1279,11 +1308,11 @@ const Profile = () => {
                 </h3>
                 <p className="text-indigo-100 text-sm">Skills you're looking to learn</p>
               </div>
-              <Link 
-                to="/my-requests" 
+              <Link
+                to="/my-requests"
                 className="text-indigo-100 text-sm font-medium hover:text-white flex items-center gap-1 bg-indigo-600 px-3 py-1 rounded-lg hover:bg-indigo-700 transition-colors"
               >
-                View All 
+                View All
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -1296,9 +1325,9 @@ const Profile = () => {
               .sort((a, b) => new Date(b.createdAt || b.updatedAt || 0) - new Date(a.createdAt || a.updatedAt || 0))
               .slice(0, 3)
               .map(request => {
-              // Use actual response count from database  
+              // Use actual response count from database
               const offers = request.responseCount || 0;
-              
+
               return (
                 <div key={request.id} className="bg-white rounded-lg px-6 py-4 shadow border-l-4 border-blue-400 hover:shadow-md transition-shadow">
                   {/* Header with title and status */}
@@ -1308,14 +1337,14 @@ const Profile = () => {
                       <p className="text-sm text-gray-600 mb-2 line-clamp-2">{request.description}</p>
                     </div>
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      request.status === 'completed' 
-                        ? 'bg-green-100 text-green-800' 
+                      request.status === 'completed'
+                        ? 'bg-green-100 text-green-800'
                         : 'bg-orange-100 text-orange-800'
                     }`}>
                       {request.status === 'completed' ? '✅ Completed' : '🔍 Seeking Help'}
                     </span>
                   </div>
-                  
+
                   {/* Key details in organized rows */}
                   <div className="grid grid-cols-2 gap-3 text-sm mb-3">
                     <div className="flex items-center gap-2">
@@ -1339,7 +1368,7 @@ const Profile = () => {
                       </span>
                     </div>
                   </div>
-                  
+
                   {/* Footer with stats and date */}
                   <div className="flex justify-between items-center pt-3 border-t border-gray-100">
                     <span className="text-xs text-gray-500">{offers} offers received</span>

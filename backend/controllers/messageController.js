@@ -12,7 +12,7 @@ const getUserConversations = async (req, res) => {
       participants: userId,
       isActive: true
     })
-    .populate('participants', 'name avatar email')
+    .populate('participants', 'name avatar email profilePicture')
     .populate('lastMessage')
     .sort({ lastMessageAt: -1 });
 
@@ -49,8 +49,41 @@ const getUserConversations = async (req, res) => {
 // Create or get conversation for an application
 const createOrGetConversation = async (req, res) => {
   try {
-    const { applicationId, ownerId } = req.body;
+    const { applicationId, ownerId, participants } = req.body;
     
+    // Handle direct user-to-user conversation
+    if (participants && participants.length === 2) {
+      console.log('Creating/getting direct conversation between:', participants);
+      
+      // Check if conversation already exists between these users
+      let conversation = await Conversation.findOne({
+        participants: { $all: participants },
+        applicationId: { $exists: false } // Direct conversations don't have applicationId
+      }).populate('participants', 'name avatar email profilePicture');
+
+      if (!conversation) {
+        // Create new direct conversation
+        conversation = await Conversation.create({
+          participants,
+          itemType: 'direct',
+          itemTitle: 'Direct Message'
+        });
+
+        // Populate the participants
+        conversation = await Conversation.findById(conversation._id)
+          .populate('participants', 'name avatar email profilePicture');
+      }
+
+      return res.json({
+        success: true,
+        conversation: {
+          ...conversation.toObject(),
+          otherParticipant: conversation.participants.find(p => p._id.toString() !== participants[0])
+        }
+      });
+    }
+    
+    // Handle application-based conversation (existing logic)
     console.log('Creating/getting conversation for:', { applicationId, ownerId });
 
     // Get the application details
@@ -84,7 +117,7 @@ const createOrGetConversation = async (req, res) => {
 
     // Check if conversation already exists
     let conversation = await Conversation.findOne({ applicationId })
-      .populate('participants', 'name avatar email');
+      .populate('participants', 'name avatar email profilePicture');
 
     console.log('Existing conversation found:', conversation ? 'yes' : 'no');
 
@@ -107,7 +140,7 @@ const createOrGetConversation = async (req, res) => {
 
       // Populate the participants
       conversation = await Conversation.findById(conversation._id)
-        .populate('participants', 'name avatar email');
+        .populate('participants', 'name avatar email profilePicture');
     }
 
     res.json({
@@ -142,8 +175,8 @@ const getConversationMessages = async (req, res) => {
     }
 
     const messages = await Message.find({ conversationId })
-      .populate('sender', 'name avatar')
-      .populate('receiver', 'name avatar')
+      .populate('sender', 'name avatar profilePicture')
+      .populate('receiver', 'name avatar profilePicture')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
@@ -225,8 +258,8 @@ const sendMessage = async (req, res) => {
 
     // Populate the message
     const populatedMessage = await Message.findById(message._id)
-      .populate('sender', 'name avatar')
-      .populate('receiver', 'name avatar');
+      .populate('sender', 'name avatar profilePicture')
+      .populate('receiver', 'name avatar profilePicture');
 
     res.json({
       success: true,

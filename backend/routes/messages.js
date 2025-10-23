@@ -14,6 +14,9 @@ router.get('/conversations/:userId', getUserConversations);
 // Create or get conversation for an application
 router.post('/conversations', createOrGetConversation);
 
+// Create or get conversation between two users
+router.post('/conversation', createOrGetConversation);
+
 // Get messages for a conversation
 router.get('/conversations/:conversationId/messages', getConversationMessages);
 

@@ -143,7 +143,7 @@ const FiltersPanel = ({ setFilters }) => {
 
   return (
     <div
-      className="w-full flex flex-wrap gap-4 p-4 rounded-2xl shadow-lg border border-[var(--color-border)]"
+      className="w-full flex flex-wrap gap-4 p-4 rounded-2xl shadow-lg border border-[var(--color-border)] md:gap-6 md:p-6"
       style={{
         background: 'linear-gradient(135deg, #29406b 80%, #3b5998 100%)',
       }}

@@ -115,7 +115,7 @@ const ApplicationDetails = () => {
       <div className="flex flex-col items-center justify-center min-h-[400px]">
         <div className="text-red-600 text-xl font-bold mb-4">{error}</div>
         <button
-          onClick={() => navigate('/applications')}
+          onClick={() => navigate('/my-applications')}
           className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:opacity-80"
         >
           Back to Applications
@@ -129,7 +129,7 @@ const ApplicationDetails = () => {
       <div className="flex flex-col items-center justify-center min-h-[400px]">
         <div className="text-gray-600 text-xl font-bold mb-4">Application not found</div>
         <button
-          onClick={() => navigate('/applications')}
+          onClick={() => navigate('/my-applications')}
           className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:opacity-80"
         >
           Back to Applications
@@ -143,11 +143,22 @@ const ApplicationDetails = () => {
   const isOffer = !!application.offerID;
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-4xl mx-auto p-6 pt-24">
       {/* Header */}
       <div className="mb-6">
+        {/* Breadcrumb Navigation */}
+        <nav className="mb-4">
+          <div className="flex items-center space-x-2 text-sm">
+            <span className="text-white/70">My Applications</span>
+            <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+            <span className="text-white font-medium">Application Details</span>
+          </div>
+        </nav>
+        
         <button
-          onClick={() => navigate('/applications')}
+          onClick={() => navigate('/my-applications')}
           className="mb-4 text-[var(--color-primary)] hover:underline flex items-center gap-2"
         >
           ← Back to Applications

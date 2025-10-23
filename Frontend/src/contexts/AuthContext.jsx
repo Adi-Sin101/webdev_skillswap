@@ -64,6 +64,16 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('token', data.token);
         return { success: true, message: data.message };
       } else {
+        // Handle banned user case
+        if (data.isBanned) {
+          return { 
+            success: false, 
+            error: data.error,
+            isBanned: true,
+            message: data.message,
+            bannedAt: data.bannedAt
+          };
+        }
         return { success: false, error: data.error };
       }
     } catch (error) {

@@ -5,7 +5,7 @@ import { createNotificationForPost } from "./notificationController.js";
 export const getAllRequests = async (req, res) => {
   try {
     const requests = await Request.find()
-      .populate("user", "name university avatar email skills")
+      .populate("user", "name university avatar email skills profilePicture")
       .sort({ createdAt: -1 });
     res.json({ 
       message: "Requests retrieved successfully", 
@@ -21,7 +21,7 @@ export const getAllRequests = async (req, res) => {
 export const getRequestById = async (req, res) => {
   try {
     const request = await Request.findById(req.params.id)
-      .populate("user", "name university avatar email skills");
+      .populate("user", "name university avatar email skills profilePicture");
     if (!request) {
       return res.status(404).json({ error: "Request not found" });
     }
@@ -35,7 +35,7 @@ export const getRequestById = async (req, res) => {
 export const getRequestsByUser = async (req, res) => {
   try {
     const requests = await Request.find({ user: req.params.userId })
-      .populate("user", "name university avatar")
+      .populate("user", "name university avatar profilePicture")
       .sort({ createdAt: -1 });
     res.json({ 
       message: "User requests retrieved successfully", 
@@ -104,7 +104,7 @@ export const createRequest = async (req, res) => {
 
     await newRequest.save();
     const populated = await Request.findById(newRequest._id)
-      .populate("user", "name university avatar email skills");
+      .populate("user", "name university avatar email skills profilePicture");
     
     // Create notifications for all other users
     await createNotificationForPost('request', populated, userId);
@@ -126,7 +126,7 @@ export const updateRequest = async (req, res) => {
       req.params.id, 
       updates, 
       { new: true, runValidators: true }
-    ).populate("user", "name university avatar email skills");
+    ).populate("user", "name university avatar email skills profilePicture");
     
     if (!request) {
       return res.status(404).json({ error: "Request not found" });
@@ -153,7 +153,7 @@ export const updateRequestStatus = async (req, res) => {
       req.params.id, 
       { status }, 
       { new: true }
-    ).populate("user", "name university avatar email skills");
+    ).populate("user", "name university avatar email skills profilePicture");
     
     if (!request) {
       return res.status(404).json({ error: "Request not found" });

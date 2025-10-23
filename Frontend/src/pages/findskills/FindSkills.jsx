@@ -79,6 +79,7 @@ const FindSkills = () => {
           title: offer.title,
           poster: offer.user?.name || "Anonymous",
           posterId: offer.user?._id, // Add user ID for profile navigation
+          posterImage: offer.user?.profilePicture || offer.user?.avatar || null, // Include profile image
           university: offer.user?.university || offer.location,
           availability: offer.availability,
           category: offer.category,
@@ -92,6 +93,7 @@ const FindSkills = () => {
           title: request.title,
           poster: request.user?.name || "Anonymous",
           posterId: request.user?._id, // Add user ID for profile navigation
+          posterImage: request.user?.profilePicture || request.user?.avatar || null, // Include profile image
           university: request.user?.university || request.location,
           availability: request.availability, // Use availability instead of deadline
           category: request.category,
@@ -149,7 +151,7 @@ const FindSkills = () => {
   }
 
   return (
-  <div className="min-h-screen bg-gradient-to-br from-[var(--color-background)] to-[var(--color-accent)]/10 p-6 pl-4">
+  <div className="min-h-screen bg-gradient-to-br from-[var(--color-background)] to-[var(--color-accent)]/10 p-6 pl-4 md:p-8 md:pl-6">
       {/* Top Search Bar with extra margin for separation from navbar */}
       <div className="mt-8">
         <SearchBar 

@@ -24,6 +24,11 @@ import Login from './pages/auth/Login.jsx'
 import Signup from './pages/auth/Signup.jsx'
 import { AuthProvider } from './contexts/AuthContext.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
+import AdminDashboard from './pages/admin/Dashboard/AdminDashboard.jsx'
+import UserManagement from './pages/admin/Users/UserManagement.jsx'
+import PostManagement from './pages/admin/Posts/PostManagement.jsx'
+import CategoryManagement from './pages/admin/Categories/CategoryManagement.jsx'
+import UniversityManagement from './pages/admin/Universities/UniversityManagement.jsx'
 
 const router = createBrowserRouter([
   {
@@ -91,6 +96,27 @@ const router = createBrowserRouter([
       {
         path: '/applications/:id',
         element: <ApplicationDetails />,
+      },
+      // Admin routes
+      {
+        path: '/admin',
+        element: <AdminDashboard />,
+      },
+      {
+        path: '/admin/users',
+        element: <UserManagement />,
+      },
+      {
+        path: '/admin/posts',
+        element: <PostManagement />,
+      },
+      {
+        path: '/admin/categories',
+        element: <CategoryManagement />,
+      },
+      {
+        path: '/admin/universities',
+        element: <UniversityManagement />,
       },
     ],
   },

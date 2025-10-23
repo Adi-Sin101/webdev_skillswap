@@ -3,7 +3,7 @@ import React from "react";
 const SearchBar = ({ searchSkill, setSearchSkill, searchUniversity, setSearchUniversity }) => {
   return (
     <div
-      className="flex flex-col md:flex-row gap-4 mb-6 shadow-2xl rounded-2xl p-6 border border-[var(--color-border)]"
+      className="flex flex-col md:flex-row gap-4 mb-6 shadow-2xl rounded-2xl p-6 border border-[var(--color-border)] md:gap-6 md:mb-8"
       style={{
         color: 'var(--color-surface)',
         background: 'linear-gradient(135deg, #29406b 80%, #3b5998 100%)',

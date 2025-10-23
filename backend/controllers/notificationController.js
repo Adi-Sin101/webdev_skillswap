@@ -4,7 +4,7 @@ import User from "../models/User.js";
 export const getUserNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find({ recipient: req.params.userId })
-      .populate("sender", "name avatar")
+      .populate("sender", "name avatar profilePicture")
       .populate("relatedOffer", "title category")
       .populate("relatedRequest", "title category")
       .sort({ createdAt: -1 })
@@ -63,7 +63,7 @@ export const createNotification = async (req, res) => {
     
     // Populate for response
     const populatedNotification = await Notification.findById(notification._id)
-      .populate("sender", "name avatar")
+      .populate("sender", "name avatar profilePicture")
       .populate("relatedOffer", "title category")
       .populate("relatedRequest", "title category");
 

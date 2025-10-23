@@ -62,7 +62,7 @@ const DiscoverProfiles = () => {
         {filteredProfiles.map(profile => (
           <div key={profile._id} className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center">
             <img 
-              src={profile.avatar || "https://randomuser.me/api/portraits/men/1.jpg"} 
+              src={profile.profilePicture || profile.avatar || "https://randomuser.me/api/portraits/men/1.jpg"} 
               alt={profile.name} 
               className="w-24 h-24 rounded-full mb-4 border-4 border-[var(--color-accent)] object-cover" 
             />

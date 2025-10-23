@@ -103,3 +103,104 @@
 [2025-10-22T16:15:47.760Z] ✅ All validations passed
 [2025-10-22T16:15:47.768Z] ✅ Offer found:  n,.k
 [2025-10-22T16:15:47.774Z] ❌ User already applied
+[2025-10-22T21:26:11.747Z] === APPLY TO OFFER DEBUG ===
+[2025-10-22T21:26:11.781Z] Offer ID: 68f7f07955fad3ff51533bc1
+[2025-10-22T21:26:11.784Z] Full request body: {
+  "applicant": "68ed7b59b3b42ea7dbc10f7c",
+  "message": "cd",
+  "availability": "ds",
+  "proposedTimeline": "d",
+  "contactInfo": {
+    "email": "xyz@gmail.com",
+    "phone": "",
+    "preferredContact": "email"
+  }
+}
+[2025-10-22T21:26:11.791Z] Extracted data: applicant=68ed7b59b3b42ea7dbc10f7c, message=cd, availability=ds
+[2025-10-22T21:26:11.794Z] ✅ All validations passed
+[2025-10-22T21:26:11.806Z] ✅ Offer found: gbv 
+[2025-10-22T21:26:11.813Z] ✅ User has not applied before
+[2025-10-22T21:26:11.827Z] Attempting to save response...
+[2025-10-22T21:26:11.849Z] ✅ Response saved successfully
+[2025-10-22T21:26:11.862Z] ✅ Notification created
+[2025-10-22T21:26:11.864Z] ✅ Application completed successfully
+[2025-10-22T22:28:00.610Z] === APPLY TO OFFER DEBUG ===
+[2025-10-22T22:28:00.612Z] Offer ID: 68f95a1ea84cd80fcb6cc47f
+[2025-10-22T22:28:00.614Z] Full request body: {
+  "applicant": "68ed7b59b3b42ea7dbc10f7c",
+  "message": "I need help in learning chess.",
+  "availability": "Weekends",
+  "proposedTimeline": "this week",
+  "contactInfo": {
+    "email": "adiba0tahsin@gmail.com",
+    "phone": "",
+    "preferredContact": "email"
+  }
+}
+[2025-10-22T22:28:00.617Z] Extracted data: applicant=68ed7b59b3b42ea7dbc10f7c, message=I need help in learning chess., availability=Weekends
+[2025-10-22T22:28:00.619Z] ✅ All validations passed
+[2025-10-22T22:28:00.628Z] ✅ Offer found: Can help with chess
+[2025-10-22T22:28:00.634Z] ✅ User has not applied before
+[2025-10-22T22:28:00.637Z] Attempting to save response...
+[2025-10-22T22:28:00.648Z] ✅ Response saved successfully
+[2025-10-22T22:28:00.657Z] ✅ Notification created
+[2025-10-22T22:28:00.658Z] ✅ Application completed successfully
+[2025-10-22T23:06:17.107Z] === APPLY TO OFFER DEBUG ===
+[2025-10-22T23:06:17.111Z] Offer ID: 68f963305446940e4ee39004
+[2025-10-22T23:06:17.118Z] Full request body: {
+  "applicant": "68f5bfcfc775d63cf7a46e0e",
+  "message": "I need help when eating.",
+  "availability": "Weekends",
+  "proposedTimeline": "This week",
+  "contactInfo": {
+    "email": "shahidaparvin@gmail.com",
+    "phone": "",
+    "preferredContact": "email"
+  }
+}
+[2025-10-22T23:06:17.126Z] Extracted data: applicant=68f5bfcfc775d63cf7a46e0e, message=I need help when eating., availability=Weekends
+[2025-10-22T23:06:17.133Z] ✅ All validations passed
+[2025-10-22T23:06:17.146Z] ✅ Offer found: Can help with eating
+[2025-10-22T23:06:17.152Z] ✅ User has not applied before
+[2025-10-22T23:06:17.165Z] Attempting to save response...
+[2025-10-22T23:06:17.177Z] ✅ Response saved successfully
+[2025-10-22T23:06:17.191Z] ✅ Notification created
+[2025-10-22T23:06:17.192Z] ✅ Application completed successfully
+[2025-10-22T23:19:38.517Z] === APPLY TO OFFER DEBUG ===
+[2025-10-22T23:19:38.519Z] Offer ID: 68f963305446940e4ee39004
+[2025-10-22T23:19:38.520Z] Full request body: {
+  "applicant": "68f86f85123011c4d53a3d20",
+  "message": "need help",
+  "availability": "Flexible",
+  "proposedTimeline": "",
+  "contactInfo": {
+    "email": "nayeemahmed@gmail.com",
+    "phone": "",
+    "preferredContact": "email"
+  }
+}
+[2025-10-22T23:19:38.521Z] Extracted data: applicant=68f86f85123011c4d53a3d20, message=need help, availability=Flexible
+[2025-10-22T23:19:38.522Z] ✅ All validations passed
+[2025-10-22T23:19:38.532Z] ✅ Offer found: Can help with eating
+[2025-10-22T23:19:38.535Z] ✅ User has not applied before
+[2025-10-22T23:19:38.544Z] Attempting to save response...
+[2025-10-22T23:19:38.562Z] ✅ Response saved successfully
+[2025-10-22T23:19:38.572Z] ✅ Notification created
+[2025-10-22T23:19:38.574Z] ✅ Application completed successfully
+[2025-10-23T01:00:17.716Z] === APPLY TO OFFER DEBUG ===
+[2025-10-23T01:00:17.717Z] Offer ID: 68f95a1ea84cd80fcb6cc47f
+[2025-10-23T01:00:17.718Z] Full request body: {
+  "applicant": "68ed7b59b3b42ea7dbc10f7c",
+  "message": "fdv",
+  "availability": "bvs",
+  "proposedTimeline": "",
+  "contactInfo": {
+    "email": "shahidaparvin@gmail.com",
+    "phone": "",
+    "preferredContact": "email"
+  }
+}
+[2025-10-23T01:00:17.720Z] Extracted data: applicant=68ed7b59b3b42ea7dbc10f7c, message=fdv, availability=bvs
+[2025-10-23T01:00:17.721Z] ✅ All validations passed
+[2025-10-23T01:00:17.730Z] ✅ Offer found: Can help with chess
+[2025-10-23T01:00:17.735Z] ❌ User already applied

@@ -110,31 +110,6 @@ const MyApplications = () => {
     }
   };
 
-  const handleEmailExchanged = async (responseId) => {
-    try {
-      const response = await fetch(`http://localhost:5000/api/responses/${responseId}/email-exchanged`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId: user._id }),
-      });
-
-      if (response.ok) {
-        setApplications(prev => prev.map(app => 
-          app._id === responseId ? { ...app, emailExchanged: true } : app
-        ));
-        alert('Email exchange confirmed! You can now proceed with the skill swap.');
-      } else {
-        const errorData = await response.json();
-        alert(`Error: ${errorData.error || 'Unknown error'}`);
-      }
-    } catch (error) {
-      console.error('Network error:', error);
-      alert(`Network error: ${error.message}`);
-    }
-  };
-
   const handleMarkComplete = async (responseId) => {
     try {
       const response = await fetch(`http://localhost:5000/api/responses/${responseId}/complete`, {
@@ -229,10 +204,7 @@ const MyApplications = () => {
               My Applications
             </h1>
             <p className="text-white/90">
-              {filter === 'received' 
-                ? 'Manage applications received for your offers and requests'
-                : 'View applications you have sent to others\' offers and requests'
-              }
+              
             </p>
           </div>
         </div>
@@ -249,7 +221,7 @@ const MyApplications = () => {
                     : 'text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10'
                 }`}
               >
-                📥 Received Applications
+                Received Applications
               </button>
               <button
                 onClick={() => setFilter('sent')}
@@ -259,7 +231,7 @@ const MyApplications = () => {
                     : 'text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10'
                 }`}
               >
-                📤 Sent Applications
+                Sent Applications
               </button>
             </div>
           </div>
@@ -307,20 +279,8 @@ const MyApplications = () => {
                         <span className="ml-2 text-[var(--color-muted)]">{application.proposedTimeline || 'Not specified'}</span>
                       </div>
                       <div className="col-span-2 md:col-span-1">
-                        <span className="font-medium text-[var(--color-primary)]">Contact Email</span>
-                        <div className="mt-1 flex items-center gap-2">
-                          <input
-                            readOnly
-                            value={application.contactInfo?.email || application.applicant?.email || otherUser?.email || ''}
-                            className="w-full border border-gray-200 rounded px-2 py-1 text-sm bg-gray-50"
-                          />
-                          <a
-                            href={`mailto:${application.contactInfo?.email || application.applicant?.email || otherUser?.email || ''}`}
-                            className="text-sm text-blue-600 hover:underline"
-                          >
-                            Send Email
-                          </a>
-                        </div>
+                        <span className="font-medium text-[var(--color-primary)]">Contact Email:</span>
+                        <span className="ml-2 text-[var(--color-muted)]">{application.contactInfo?.email || application.applicant?.email || otherUser?.email || 'Not provided'}</span>
                       </div>
                       <div>
                         <span className="font-medium text-[var(--color-primary)]">Applied:</span>
@@ -345,20 +305,20 @@ const MyApplications = () => {
                           to={`/applications/${application._id}`}
                           className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:opacity-80 transition-all text-center"
                         >
-                          📋 Review Application
+                         Review Application
                         </Link>
                         <div className="flex gap-1">
                           <button
                             onClick={() => handleUpdateStatus(application._id, 'accepted')}
                             className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition-colors flex-1"
                           >
-                            ✅ Accept
+                            Accept
                           </button>
                           <button
                             onClick={() => handleUpdateStatus(application._id, 'rejected')}
                             className="px-2 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 transition-colors flex-1"
                           >
-                            ❌ Reject
+                            Reject
                           </button>
                         </div>
                       </div>
@@ -366,7 +326,7 @@ const MyApplications = () => {
 
                     {filter === 'received' && application.status === 'rejected' && (
                       <div className="text-center">
-                        <div className="text-red-600 font-bold text-xs">❌ Rejected</div>
+                        <div className="text-red-600 font-bold text-xs">Rejected</div>
                         <Link
                           to={`/applications/${application._id}`}
                           className="text-blue-600 hover:underline text-xs"
@@ -383,20 +343,34 @@ const MyApplications = () => {
                           to={`/applications/${application._id}`}
                           className="px-3 py-1 bg-[var(--color-accent)] text-white rounded text-xs hover:opacity-80 transition-all text-center"
                         >
-                          📋 View Application
+                          View Application
                         </Link>
                         
-                        {/* Show completion button based on who can complete */}
-                        {(
-                          (itemType === 'offer' && filter === 'sent') || // Applicant can complete offer applications
-                          (itemType === 'request' && filter === 'received') // Request owner can complete request applications
-                        ) && (
-                          <button
-                            onClick={() => navigate(`/applications/${application._id}`)}
-                            className="px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition-colors"
-                          >
-                            ✅ Complete
-                          </button>
+                        {/* Only the user who took help can complete: */}
+                        {/* - For offers: applicant (filter === 'sent')
+                            For requests: request owner (filter === 'received') */}
+                        {application.status === 'accepted' && !application.isCompleted && (
+                          ((itemType === 'offer' && filter === 'sent') || (itemType === 'request' && filter === 'received')) && (
+                            <button
+                              onClick={() => handleMarkComplete(application._id)}
+                              className="px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition-colors"
+                            >
+                              ✅ Complete
+                            </button>
+                          )
+                        )}
+
+                        {/* Message button: Only show if user is the owner (offer/request poster) and application is accepted */}
+                        {application.status === 'accepted' && (
+                          // For received applications, user is the owner
+                          filter === 'received' && (
+                            <button
+                              onClick={() => handleStartConversation(application._id)}
+                              className="px-3 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 transition-colors mt-1"
+                            >
+                              Message
+                            </button>
+                          )
                         )}
                       </div>
                     )}
@@ -416,9 +390,9 @@ const MyApplications = () => {
                     {application.status === 'pending' && filter === 'sent' && (
                       <Link
                         to={`/applications/${application._id}`}
-                        className="px-3 py-1 bg-gray-500 text-white rounded text-xs hover:opacity-80 transition-all"
+                        className="px-3 py-1 bg-[var(--color-accent)] text-white rounded text-xs hover:opacity-80 transition-all"
                       >
-                        � View Status
+                        View Application
                       </Link>
                     )}
                   </div>

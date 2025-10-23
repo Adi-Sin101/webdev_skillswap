@@ -36,6 +36,10 @@ const Login = () => {
     if (result.success) {
       navigate(from, { replace: true }); // Redirect to intended page or home
     } else {
+      // Handle banned user with custom modal/alert
+      if (result.isBanned) {
+        alert(`Account Banned!\n\n${result.message}\n\nBanned on: ${new Date(result.bannedAt).toLocaleDateString()}\n\nContact support if you believe this is an error.`);
+      }
       setError(result.error);
     }
     
@@ -137,9 +141,34 @@ const Login = () => {
 
         {/* Additional Info */}
         <div className="text-center">
-          <p className="text-sm text-[var(--color-muted)]">
+          <p className="text-sm text-white/80">
             Connect with fellow students and exchange skills
           </p>
+        </div>
+
+        {/* Admin Access Info */}
+        <div className="bg-yellow-500/10 backdrop-blur-sm border border-yellow-500/30 rounded-xl p-4">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-yellow-400 mb-1">Admin Access</h3>
+              <p className="text-xs text-yellow-200/90 mb-2">
+                Admin users can access the management dashboard to moderate users, posts, categories, and universities.
+              </p>
+              <details className="text-xs">
+                <summary className="text-yellow-400 cursor-pointer hover:text-yellow-300 font-medium">
+                  View admin credentials (for developers)
+                </summary>
+                <div className="mt-2 p-3 bg-black/20 rounded-lg border border-yellow-500/20">
+                  <p className="text-yellow-200/90 mb-1">📧 Email: <span className="font-mono text-yellow-300">admin@skillswap.com</span></p>
+                  <p className="text-yellow-200/90">🔑 Password: <span className="font-mono text-yellow-300">Admin@123</span></p>
+                  <p className="text-yellow-200/70 mt-2 text-[10px]">⚠️ Change password after first login</p>
+                </div>
+              </details>
+            </div>
+          </div>
         </div>
       </div>
     </div>

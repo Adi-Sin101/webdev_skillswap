@@ -343,7 +343,8 @@ export const updateResponseStatus = async (req, res) => {
             title: 'Application Accepted! 🎉',
             message: `Your application for "${offer.title}" has been accepted!`,
             relatedOffer: response.offerID,
-            actionUrl: `/offers/${response.offerID}`
+            relatedResponse: response._id,
+            actionUrl: `/applications/${response._id}`
           });
         } else if (response.requestID) {
           await Request.findByIdAndUpdate(response.requestID, { status: 'completed' });
@@ -357,7 +358,8 @@ export const updateResponseStatus = async (req, res) => {
             title: 'Offer to Help Accepted! 🎉',
             message: `Your offer to help with "${request.title}" has been accepted!`,
             relatedRequest: response.requestID,
-            actionUrl: `/requests/${response.requestID}`
+            relatedResponse: response._id,
+            actionUrl: `/applications/${response._id}`
           });
         }
       } catch (updateError) {

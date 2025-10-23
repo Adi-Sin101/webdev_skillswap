@@ -5,7 +5,7 @@ import { createNotificationForPost } from "./notificationController.js";
 export const getAllOffers = async (req, res) => {
   try {
     const offers = await Offer.find()
-      .populate("user", "name university avatar email skills")
+      .populate("user", "name university avatar email skills profilePicture")
       .sort({ createdAt: -1 });
     res.json({ 
       message: "Offers retrieved successfully", 
@@ -21,7 +21,7 @@ export const getAllOffers = async (req, res) => {
 export const getOfferById = async (req, res) => {
   try {
     const offer = await Offer.findById(req.params.id)
-      .populate("user", "name university avatar email skills");
+      .populate("user", "name university avatar email skills profilePicture");
     if (!offer) {
       return res.status(404).json({ error: "Offer not found" });
     }
@@ -35,7 +35,7 @@ export const getOfferById = async (req, res) => {
 export const getOffersByUser = async (req, res) => {
   try {
     const offers = await Offer.find({ user: req.params.userId })
-      .populate("user", "name university avatar")
+      .populate("user", "name university avatar profilePicture")
       .sort({ createdAt: -1 });
     res.json({ 
       message: "User offers retrieved successfully", 
@@ -106,7 +106,7 @@ export const createOffer = async (req, res) => {
 
     await newOffer.save();
     const populated = await Offer.findById(newOffer._id)
-      .populate("user", "name university avatar email skills");
+      .populate("user", "name university avatar email skills profilePicture");
     
     // Create notifications for all other users
     await createNotificationForPost('offer', populated, userId);
@@ -128,7 +128,7 @@ export const updateOffer = async (req, res) => {
       req.params.id, 
       updates, 
       { new: true, runValidators: true }
-    ).populate("user", "name university avatar email skills");
+    ).populate("user", "name university avatar email skills profilePicture");
     
     if (!offer) {
       return res.status(404).json({ error: "Offer not found" });
@@ -155,7 +155,7 @@ export const updateOfferStatus = async (req, res) => {
       req.params.id, 
       { status }, 
       { new: true }
-    ).populate("user", "name university avatar email skills");
+    ).populate("user", "name university avatar email skills profilePicture");
     
     if (!offer) {
       return res.status(404).json({ error: "Offer not found" });

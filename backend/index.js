@@ -16,6 +16,7 @@ import connectionRoutes from './routes/connections.js';
 import universityRoutes from './routes/universities.js';
 import categoryRoutes from './routes/categories.js';
 import messageRoutes from './routes/messages.js';
+import adminRoutes from './routes/admin.js';
 
 dotenv.config();
 connectDB();
@@ -40,6 +41,7 @@ app.use('/api/connections', connectionRoutes);
 app.use('/api/universities', universityRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Root route
 app.get('/', (req, res) => {
@@ -56,7 +58,8 @@ app.get('/', (req, res) => {
       connections: '/api/connections',
       universities: '/api/universities',
       categories: '/api/categories',
-      messages: '/api/messages'
+      messages: '/api/messages',
+      admin: '/api/admin'
     }
   });
 });

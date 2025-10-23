@@ -19,6 +19,11 @@ const UserSchema = new mongoose.Schema({
   badges: { type: [String], default: ["New User"] },
   rating: { type: Number, default: 0, min: 0, max: 5 },
   completedActivities: { type: Number, default: 0 },
+  // Admin and moderation fields
+  role: { type: String, enum: ['user', 'admin'], default: 'user' },
+  isBanned: { type: Boolean, default: false },
+  bannedAt: Date,
+  bannedReason: String,
   createdAt: { type: Date, default: Date.now }
 });
 

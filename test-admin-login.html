@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #4F46E5;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #4338CA;
+        }
+        .output {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Admin Login & Token Test</h1>
+        <p>This page will help you test the admin login and get a valid token.</p>
+        
+        <div>
+            <h3>Step 1: Login as Admin</h3>
+            <button onclick="loginAdmin()">Login with Admin Credentials</button>
+        </div>
+        
+        <div>
+            <h3>Step 2: Test Admin Stats</h3>
+            <button onclick="testAdminStats()">Fetch Admin Stats</button>
+        </div>
+        
+        <div>
+            <h3>Step 3: Clear Token</h3>
+            <button onclick="clearToken()">Clear Stored Token</button>
+        </div>
+        
+        <div id="output" class="output">Output will appear here...</div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000';
+        
+        function log(message, type = 'info') {
+            const output = document.getElementById('output');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : '';
+            output.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        async function loginAdmin() {
+            try {
+                log('🔄 Attempting to login as admin...', 'info');
+                
+                const response = await fetch(`${API_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@skillswap.com',
+                        password: 'Admin@123'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    localStorage.setItem('token', data.token);
+                    log('✅ Login successful!', 'success');
+                    log(`User: ${data.user.name}`, 'success');
+                    log(`Email: ${data.user.email}`, 'success');
+                    log(`Role: ${data.user.role}`, 'success');
+                    log(`Token stored in localStorage`, 'success');
+                    log('-------------------');
+                } else {
+                    log(`❌ Login failed: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testAdminStats() {
+            try {
+                const token = localStorage.getItem('token');
+                
+                if (!token) {
+                    log('❌ No token found. Please login first.', 'error');
+                    return;
+                }
+                
+                log('🔄 Fetching admin stats...', 'info');
+                log(`Using token: ${token.substring(0, 20)}...`, 'info');
+                
+                const response = await fetch(`${API_URL}/api/admin/stats`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log('✅ Admin stats retrieved successfully!', 'success');
+                    log(JSON.stringify(data.stats, null, 2), 'success');
+                    log('-------------------');
+                } else {
+                    log(`❌ Failed to fetch stats: ${data.error}`, 'error');
+                    log(`Status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+        
+        function clearToken() {
+            localStorage.removeItem('token');
+            log('🗑️ Token cleared from localStorage', 'info');
+            log('-------------------');
+        }
+        
+        // Check on load
+        window.onload = () => {
+            const token = localStorage.getItem('token');
+            if (token) {
+                log('ℹ️ Existing token found in localStorage', 'info');
+                log(`Token: ${token.substring(0, 20)}...`, 'info');
+            } else {
+                log('ℹ️ No token found in localStorage', 'info');
+            }
+            log('-------------------');
+        };
+    </script>
+</body>
+</html>

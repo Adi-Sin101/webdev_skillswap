@@ -583,15 +583,21 @@ const Notifications = () => {
                           </svg>
                         </button>
                       ) : notification.actionUrl ? (
-                        <a
-                          href={notification.actionUrl}
+                        <button
+                          onClick={() => {
+                            // Mark as read before navigating
+                            if (!notification.isRead) {
+                              markAsRead(notification._id || notification.id);
+                            }
+                            navigate(notification.actionUrl);
+                          }}
                           className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-accent)] hover:text-blue-800"
                         >
                           View Details
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                           </svg>
-                        </a>
+                        </button>
                       ) : null}
                     </div>
                   </div>

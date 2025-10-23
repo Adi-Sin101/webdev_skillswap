@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import User from "../models/User.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
+const JWT_SECRET = process.env.JWT_SECRET || "your-super-secret-jwt-key-change-in-production";
 
 // Generate JWT token
 const generateToken = (userId, email) => {
@@ -69,6 +69,16 @@ export const login = async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ error: "Invalid email or password" });
+    }
+
+    // Check if user is banned
+    if (user.isBanned) {
+      return res.status(403).json({ 
+        error: "Account Banned",
+        message: `Your account has been banned. Reason: ${user.bannedReason || 'Violation of platform policies'}`,
+        bannedAt: user.bannedAt,
+        isBanned: true
+      });
     }
 
     // Check password

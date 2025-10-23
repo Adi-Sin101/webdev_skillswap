@@ -50,6 +50,11 @@ const RequestSchema = new mongoose.Schema({
     default: "pending" 
   },
   
+  // Moderation
+  isHidden: { type: Boolean, default: false },
+  hiddenAt: Date,
+  hiddenReason: String,
+  
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
