@@ -933,13 +933,8 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-accent)]/20 flex flex-col py-0">
-      {/* Top Info Bar */}
-      {/* If viewing another user's profile, show a banner */}
-      {!isOwner && (
-        <div className="w-full bg-yellow-100 text-yellow-800 text-center py-2 font-semibold">You are viewing another user's profile</div>
-      )}
-      <div className="w-full bg-white shadow-lg px-6 md:px-12 py-8 flex flex-col md:flex-row gap-8 items-center mt-8 relative">
+    <div className="min-h-screen bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-accent)]/20 flex flex-col pt-20 md:pt-24">
+      <div className="w-full bg-white shadow-lg px-6 md:px-12 py-8 flex flex-col md:flex-row gap-8 items-center mt-4 relative">
         <ProfilePictureUpload 
           user={user} 
           onProfilePictureUpdate={(updatedUser) => setUser(updatedUser)}
